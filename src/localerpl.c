@@ -115,6 +115,19 @@ unsigned *c32schrnul(const unsigned *s, unsigned c)
 	}
 }
 
+A_Use_decl_annotations
+int c32scmp(const unsigned *s1, const unsigned *s2)
+{
+	for (;; s1++, s2++) {
+		if (*s1 < *s2)
+			return -1;
+		if (*s1 != *s2)
+			return 1;
+		if (!*s1)
+			return 0;
+	}
+}
+
 static void c32_as_wchars(const unsigned *s, wchar_t *d)
 {
 	do {
@@ -122,7 +135,8 @@ static void c32_as_wchars(const unsigned *s, wchar_t *d)
 	} while (L'\0' != (*d++ = (wchar_t)*s++));
 }
 
-static int rpl_c32scoll(const unsigned *s1, const unsigned *s2)
+static int proc_c32s(const unsigned *s1, const unsigned *s2,
+	int (*fn)(const wchar_t *ws1, const wchar_t *ws2))
 {
 	int ret;
 	wchar_t buf[COLL_BUF_SZ], *ws1, *ws2;
@@ -150,12 +164,22 @@ static int rpl_c32scoll(const unsigned *s1, const unsigned *s2)
 	}
 	c32_as_wchars(s1, ws1);
 	c32_as_wchars(s2, ws2);
-	ret = wcscoll(ws1, ws2);
+	ret = (*fn)(ws1, ws2);
 	if (ws1 != buf)
 		free(ws1);
 	if (ws2 != &buf[sizeof(buf)/sizeof(buf[0])] - avail)
 		free(ws2);
 	return ret;
+}
+
+static int rpl_c32scoll(const unsigned *s1, const unsigned *s2)
+{
+	return proc_c32s(s1, s2, wcscoll);
+}
+
+static int rpl_c32sicmp(const unsigned *s1, const unsigned *s2)
+{
+	return proc_c32s(s1, s2, _wcsicmp);
 }
 
 static unsigned rpl_c32tolower(unsigned c)
@@ -487,6 +511,7 @@ static const struct localerpl rpl_funcs = {
 	mbstowcs,
 	wcstombs,
 	strcoll,
+	_stricmp,
 	tolower,
 	toupper,
 	isascii,
@@ -503,6 +528,7 @@ static const struct localerpl rpl_funcs = {
 	isupper,
 	isxdigit,
 	rpl_c32scoll,
+	rpl_c32sicmp,
 	rpl_c32tolower,
 	rpl_c32toupper,
 	rpl_c32isascii,

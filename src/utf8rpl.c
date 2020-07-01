@@ -17,6 +17,7 @@
 #include "mscrtx/locale_helpers.h"
 #include "libutf16/utf8_cstd.h"
 #include "libutf16/utf16_to_utf8.h"
+#include "libutf16/utf8_to_utf16_one.h"
 #include "unicode_ctype/unicode_ctype.h"
 #include "unicode_ctype/unicode_toupper.h"
 #include "mscrtx/utf8env.h"
@@ -861,6 +862,39 @@ static int utf8_rpl_c32scoll(const unsigned *s1, const unsigned *s2)
 	return ret;
 }
 
+static int utf8_rpl_stricmp(const char *s1, const char *s2)
+{
+	for (;;) {
+		utf32_char_t w1, w2;
+		s1 = (const char*)utf8_to_utf32_one_z(&w1, (const utf8_char_t*)s1);
+		s2 = (const char*)utf8_to_utf32_one_z(&w2, (const utf8_char_t*)s2);
+		if (!s1 || !s2)
+			return (int)((unsigned)-1/2); /* INT_MAX */
+		w1 = unicode_tolower(w1);
+		w2 = unicode_tolower(w2);
+		if (w1 < w2)
+			return -1;
+		if (w1 != w2)
+			return 1;
+		if (!w1)
+			return 0;
+	}
+}
+
+static int utf8_rpl_c32sicmp(const unsigned *s1, const unsigned *s2)
+{
+	for (;; s1++, s2++) {
+		const unsigned w1 = unicode_tolower(*s1);
+		const unsigned w2 = unicode_tolower(*s2);
+		if (w1 < w2)
+			return -1;
+		if (w1 != w2)
+			return 1;
+		if (!w1)
+			return 0;
+	}
+}
+
 static int utf8_rpl_tolower(int c)
 {
 	return utf8_is_one_byte((unsigned)c) ? (int)unicode_tolower((unsigned)c) : c;
@@ -1023,7 +1057,7 @@ static int utf8_rpl_vfprintf(FILE *stream, const char *format, va_list ap)
 
 	{
 		const int n = utf8_vfprintf_to_console(_fileno(stream), format, ap);
-		_setmode(_fileno(stream), fmode);
+		(void)_setmode(_fileno(stream), fmode);
 		return n;
 	}
 }
@@ -1216,6 +1250,7 @@ const struct localerpl utf8_funcs = {
 	(size_t (*)(wchar_t *, const char *, size_t))                     utf8_mbstoc16s,
 	(size_t (*)(char *, const wchar_t *, size_t))                     utf8_c16stombs,
 	utf8_rpl_strcoll,
+	utf8_rpl_stricmp,
 	utf8_rpl_tolower,
 	utf8_rpl_toupper,
 	utf8_rpl_isascii,
@@ -1232,6 +1267,7 @@ const struct localerpl utf8_funcs = {
 	utf8_rpl_isupper,
 	utf8_rpl_isxdigit,
 	utf8_rpl_c32scoll,
+	utf8_rpl_c32sicmp,
 	/* libunicode_ctype */
 	unicode_tolower,
 	unicode_toupper,

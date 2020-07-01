@@ -149,6 +149,7 @@ struct localerpl {
 	size_t (*rpl_wcstombs)(char *mbstr, const wchar_t *wcstr, size_t count);
 
 	int (*rpl_strcoll)(const char *s1, const char *s2);
+	int (*rpl_stricmp)(const char *s1, const char *s2);
 	int (*rpl_tolower)(int c);
 	int (*rpl_toupper)(int c);
 	int (*rpl_isascii)(int c);
@@ -166,6 +167,7 @@ struct localerpl {
 	int (*rpl_isxdigit)(int c);
 
 	int (*rpl_c32scoll)(const unsigned *s1, const unsigned *s2);
+	int (*rpl_c32sicmp)(const unsigned *s1, const unsigned *s2);
 	unsigned (*rpl_c32tolower)(unsigned c);
 	unsigned (*rpl_c32toupper)(unsigned c);
 	int (*rpl_c32isascii)(unsigned c);
@@ -252,6 +254,15 @@ A_Ret_never_null
 A_Ret_z
 #endif
 unsigned *c32schrnul(const unsigned *s, unsigned c);
+
+/* strcmp(3) */
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(s1, A_In_z)
+A_At(s2, A_In_z)
+#endif
+int c32scmp(const unsigned *s1, const unsigned *s2);
 
 #ifndef LOCALE_RPL_IMPL
 
@@ -559,6 +570,15 @@ static inline int strcoll(const char *s1, const char *s2)
 	return localerpl->rpl_strcoll(s1, s2);
 }
 
+#ifdef stricmp
+#undef stricmp
+#endif
+#define stricmp localerpl_rpl_stricmp
+static inline int stricmp(const char *s1, const char *s2)
+{
+	return localerpl->rpl_stricmp(s1, s2);
+}
+
 #ifdef tolower
 #undef tolower
 #endif
@@ -699,6 +719,9 @@ static inline int isxdigit(int c)
 #ifdef wcscoll
 #undef wcscoll
 #endif
+#ifdef wcsicmp
+#undef wcsicmp
+#endif
 #ifdef towlower
 #undef towlower
 #endif
@@ -766,6 +789,7 @@ static inline int isxdigit(int c)
 #ifndef LOCALERPL_NEED_CALLBACKS
 
 #define wcscoll use_c32scoll_instead
+#define wcsicmp use_c32sicmp_instead
 #define towlower use_c32tolower_instead
 #define towupper use_c32toupper_instead
 #define iswascii use_c32isascii_instead
@@ -795,6 +819,14 @@ static inline int wcscoll(const wchar_t *s1, const wchar_t *s2)
 {
 	(void)s1, (void)s2;
 	assert(0); /* use c32scoll instead */
+	return -1;
+}
+
+#define wcsicmp localerpl_rpl_wcsicmp
+static inline int wcsicmp(const wchar_t *s1, const wchar_t *s2)
+{
+	(void)s1, (void)s2;
+	assert(0); /* use c32sicmp instead */
 	return -1;
 }
 
@@ -973,6 +1005,15 @@ static inline size_t wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 static inline int c32scoll(const unsigned *s1, const unsigned *s2)
 {
 	return localerpl->rpl_c32scoll(s1, s2);
+}
+
+#ifdef c32sicmp
+#undef c32sicmp
+#endif
+#define c32sicmp localerpl_rpl_c32sicmp
+static inline int c32sicmp(const unsigned *s1, const unsigned *s2)
+{
+	return localerpl->rpl_c32sicmp(s1, s2);
 }
 
 #ifdef c32tolower
