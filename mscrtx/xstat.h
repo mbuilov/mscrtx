@@ -97,6 +97,11 @@ A_Success(!return)
 #endif
 int xwstat(const wchar_t path[], struct xstat *buf, int dont_follow);
 
+#if defined(__cplusplus) && defined(__GNUC__) && __GNUC__ >= 6
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow" /* 'int xstat(const char*, xstat*)' hides constructor for 'struct xstat' */
+#endif
+
 /* Get stat info by file path.
    Returns 0 on success, -1 if failed.
    On failure errno can be set to:
@@ -115,6 +120,10 @@ A_At(buf, A_Out)
 A_Success(!return)
 #endif
 int xstat(const char path[], struct xstat *buf);
+
+#if defined(__cplusplus) && defined(__GNUC__) && __GNUC__ >= 6
+#pragma GCC diagnostic pop
+#endif
 
 /* Same as xstat, but do not follow a symbolic link.  */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
