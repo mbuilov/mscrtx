@@ -9,10 +9,14 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <errno.h>
-#include <time.h>
 
 #include "mscrtx/localerpl.h"
 #include "mscrtx/xstat.h"
+
+/* not defined under MinGW.org */
+#ifndef ENOTSUP
+#define ENOTSUP 129
+#endif
 
 #ifndef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 #define A_Use_decl_annotations
@@ -33,7 +37,8 @@ static wchar_t is_walpha(const wchar_t w)
 }
 
 A_Use_decl_annotations
-wchar_t *xpathwc(const char path[], wchar_t buf[], const size_t buf_size)
+wchar_t *xpathwc_alloc(const char path[], wchar_t buf[],
+	const size_t buf_size, const size_t lim, void *(*alloc)(size_t sz))
 {
 	if (buf_size > 2/*red zone*/) {
 		const size_t n = mbstowcs(buf, path, buf_size);
@@ -41,23 +46,24 @@ wchar_t *xpathwc(const char path[], wchar_t buf[], const size_t buf_size)
 			errno = EILSEQ;
 			return NULL;
 		}
-		if (n < buf_size - 2/*red zone*/)
+		if (n <= buf_size - 2/*red zone*/)
 			return buf;
 		/* Red zone is used.  Assume too small buffer.  */
 	}
 	{
-		/* Determine the length of needed buffer.  */
+		/* Determine length of needed buffer.  */
 		const size_t n = mbstowcs(NULL, path, 0);
 		if (n == (size_t)-1) {
 			errno = EILSEQ;
 			return NULL;
 		}
-		/* Path should not exceed the limit of 32767 wide characters.  */
-		if (n > 32767 - 1) {
+		/* Path should not exceed the limit of lim wide characters,
+		   including terminating L'\0'.  */
+		if (n >= lim) {
 			errno = ENAMETOOLONG;
 			return NULL;
 		}
-		buf = (wchar_t*)malloc(sizeof(*buf)*(n + 1));
+		buf = (wchar_t*)(*alloc)(sizeof(*buf)*(n + 1));
 		if (buf)
 			(void)mbstowcs(buf, path, n + 1);
 		return buf;
@@ -171,28 +177,92 @@ static unsigned long long hinfo_get_size(const BY_HANDLE_FILE_INFORMATION *const
 	return size;
 }
 
-static xtime_t hinfo_convert_time(const FILETIME file_time, const time_t fallback)
+/* https://en.wikipedia.org/wiki/Leap_year */
+static int is_leap_year(const unsigned y/*since 1900*/)
+{
+	if (y % 4)
+		return 0;
+	if (y % 100)
+		return 1;
+	return !(((y + 300)/*year since 1600*/) % 400);
+}
+
+static unsigned leap_years_after_1900(const unsigned cy/*since 1900*/)
+{
+	/* Don't count current year.  */
+	const unsigned y = cy - 1;
+	return
+		y/4              /* Every 4-th year */
+		- y/100          /* Except every 100-th year */
+		+ (y + 300)/400; /* But plus every 400-th year since 1600 */
+}
+
+xtime_t xtimegm(
+	const unsigned year/*since 1900,>70*/,
+	const unsigned month/*0..11*/,
+	const unsigned day/*1..31*/,
+	const unsigned hour/*0..23*/,
+	const unsigned minute/*0..59*/,
+	const unsigned second/*0..60*/,
+	unsigned *const yday/*NULL?,out:0..365*/)
+{
+	/* days since the beginning of the year */
+	unsigned yd = day - 1;
+	if (yd > 30)
+		return -1; /* invalid day */
+	switch (month) {
+		case 0:  yd += 0; break;
+		case 1:  yd += 0 + 31; break;
+		case 2:  yd += 0 + 31 + 28; break;
+		case 3:  yd += 0 + 31 + 28 + 31; break;
+		case 4:  yd += 0 + 31 + 28 + 31 + 30; break;
+		case 5:  yd += 0 + 31 + 28 + 31 + 30 + 31; break;
+		case 6:  yd += 0 + 31 + 28 + 31 + 30 + 31 + 30; break;
+		case 7:  yd += 0 + 31 + 28 + 31 + 30 + 31 + 30 + 31; break;
+		case 8:  yd += 0 + 31 + 28 + 31 + 30 + 31 + 30 + 31 + 31; break;
+		case 9:  yd += 0 + 31 + 28 + 31 + 30 + 31 + 30 + 31 + 31 + 30; break;
+		case 10: yd += 0 + 31 + 28 + 31 + 30 + 31 + 30 + 31 + 31 + 30 + 31; break;
+		case 11: yd += 0 + 31 + 28 + 31 + 30 + 31 + 30 + 31 + 31 + 30 + 31 + 30; break;
+		default:
+			return -1; /* invalid month */
+	}
+	if (year < 70)
+		return -1; /* invalid year */
+	yd += month > 1 && is_leap_year(year);
+	{
+		/* add days between Epoch 1970/1/1 and the year */
+		unsigned long long t = yd + 365ull*(year - 70) + leap_years_after_1900(year) - leap_years_after_1900(70);
+		if (hour > 23)
+			return -1; /* invalid hour */
+		if (minute > 59)
+			return -1; /* invalid minute */
+		if (second > 60)
+			return -1; /* invalid second */
+		t = ((t*24 + hour)*60 + minute)*60 + second;
+		if (yday)
+			*yday = yd;
+		return (xtime_t)t;
+	}
+}
+
+static xtime_t hinfo_convert_time(const FILETIME file_time, const xtime_t fallback)
 {
 	SYSTEMTIME system_time;
-	struct tm tm;
 
 	if (file_time.dwLowDateTime == 0 && file_time.dwHighDateTime == 0)
 		return fallback; /* Not supported by the FS, use fallback.  */
 
 	if (!FileTimeToSystemTime(&file_time, &system_time))
-		return -1; /* _mkgmtime() also returns -1 if fails */
+		return -1; /* xtimegm() also returns -1 if fails */
 
-	tm.tm_year  = system_time.wYear - 1900;
-	tm.tm_mon   = system_time.wMonth - 1;
-	tm.tm_mday  = system_time.wDay;
-	tm.tm_hour  = system_time.wHour;
-	tm.tm_min   = system_time.wMinute;
-	tm.tm_sec   = system_time.wSecond;
-
-	{
-		const time_t t = _mkgmtime(&tm);
-		return t;
-	}
+	return xtimegm(
+		(unsigned)system_time.wYear - 1900,
+		(unsigned)system_time.wMonth - 1,
+		(unsigned)system_time.wDay,
+		(unsigned)system_time.wHour,
+		(unsigned)system_time.wMinute,
+		(unsigned)system_time.wSecond,
+		NULL);
 }
 
 static unsigned short dup_mode_bits(unsigned short mode)
@@ -205,8 +275,6 @@ static unsigned short dup_mode_bits(unsigned short mode)
 A_Use_decl_annotations
 int xstat_root(const wchar_t wp[], struct xstat *const buf)
 {
-	struct tm tm;
-
 	if (!is_root_path(wp)) {
 		errno = ENOENT;
 		return -1;
@@ -223,15 +291,7 @@ int xstat_root(const wchar_t wp[], struct xstat *const buf)
 	buf->st_ino   = 0;
 	buf->st_size  = 0;
 
-	tm.tm_year  = 80; /* 1980 */
-	tm.tm_mon   = 0;
-	tm.tm_mday  = 1;
-	tm.tm_hour  = 0;
-	tm.tm_min   = 0;
-	tm.tm_sec   = 0;
-	tm.tm_isdst = -1;
-
-	buf->st_mtime = _mkgmtime(&tm);
+	buf->st_mtime = xtimegm(80/*1980*/, 0, 1, 0, 0, 0, NULL);
 	buf->st_atime = buf->st_mtime;
 	buf->st_ctime = buf->st_mtime;
 
