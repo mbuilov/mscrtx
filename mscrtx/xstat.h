@@ -16,12 +16,7 @@
 
 typedef unsigned short     xdev_t;
 typedef unsigned long long xino_t;
-
-#ifdef _USE_32BIT_TIME_T
-typedef long xtime_t;
-#else
-typedef long long xtime_t;
-#endif
+typedef long long          xtime_t;
 
 struct xstat {
 	xdev_t             st_dev;
@@ -52,7 +47,7 @@ struct xstat {
 
 /* This is non-standard for Windows.  */
 #define S_IFLNK    (_S_IFREG | _S_IFCHR)
-#define	S_ISLNK(m) (((m) & S_IFMT) == S_IFLNK)
+#define	S_ISLNK(m) (((m) & _S_IFMT) == S_IFLNK)
 
 /* Open file or directory for xfstat.  */
 #define xstat_open(wpath, dont_follow) \
@@ -157,18 +152,46 @@ int xstat_root(const wchar_t path[], struct xstat *const buf);
    May return buf if it's big enough, else returns dynamically allocated
     buffer, which must be free()'d after use.
    Assume buf_size is the buf size in wide-characters.
+   Do not allocate buffer exceeding the lim wide-characters, including terminating L'\0'.
    Returns NULL on error, setting errno to one of:
    EILSEQ       - failed to convert path to wide-character string,
-   ENAMETOOLONG - resulting path exceeds the limit of 32767 wide characters,
+   ENAMETOOLONG - resulting path exceeds the limit of lim wide characters,
    ENOMEM       - memory allocation failure.  */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Check_return
 A_Nonnull_arg(1)
+A_Nonnull_arg(5)
 A_At(path, A_In_z)
 A_At(buf, A_Pre_writable_size(buf_size))
+A_At(alloc, A_Notnull)
 A_Ret_z
 A_Success(return)
 #endif
-wchar_t *xpathwc(const char path[], wchar_t buf[], size_t buf_size);
+wchar_t *xpathwc_alloc(const char path[], wchar_t buf[],
+	const size_t buf_size, const size_t lim, void *(*alloc)(size_t sz));
+
+/* Path should not exceed the limit of 32767 wide characters. */
+#define xpathwc(path, buf, buf_size) \
+	xpathwc_alloc(path, buf, buf_size, 32767, malloc)
+
+/* Convert borken-down UTC time to number of seconds since Epoch (1970/1/1).
+   Compute: yday - days since January 1.
+   Returns -1 if input argument(s) are invalid */
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(yday, A_Out_opt A_Out_range(0,365))
+A_Success(return != -1)
+#endif
+xtime_t xtimegm(
+	const unsigned year/*since 1900,>70*/,
+	const unsigned month/*0..11*/,
+	const unsigned day/*1..31*/,
+	const unsigned hour/*0..23*/,
+	const unsigned minute/*0..59*/,
+	const unsigned second/*0..60*/,
+	unsigned *const yday/*NULL?,out:0..365*/);
+
+/* Get day-of-week (days since Sunday - [0,6]) for the given xtime_t (number of seconds since Epoch (1970/1/1)) */
+#define xweekday(t) ((unsigned)(((t)/(24*60*60) + 4/* 1970/1/1 was Thursday */) % 7))
 
 #endif /* XSTAT_H_INCLUDED */
