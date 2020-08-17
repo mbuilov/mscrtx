@@ -24,6 +24,16 @@
 #include "mscrtx/utf16cvt.h"
 #include "mscrtx/console_setup.h"
 
+/* not defined under MinGW.org */
+#ifndef _O_U16TEXT
+#define _O_U16TEXT 0x20000
+#endif
+
+/* not defined under MinGW.org */
+#ifndef INT_MAX
+#define INT_MAX ((unsigned)-1/2)
+#endif
+
 #ifndef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 #define A_Use_decl_annotations
 #endif
@@ -34,13 +44,14 @@
 #endif
 
 /* stack bufs  */
-#define LOCALE_BUF_SIZE       128
 #define PATH_BUF_SIZE         260
 #define FPUTS_BUF_SIZE        256
 #define FPRINTF_BUF_SIZE      512
 #define WRITE_BUF_SIZE        512
 #define COLL_BUF_SZ           512
+#define POPEN_CMD_BUF_SIZE    512
 #define SPAWN_CMD_BUF_SIZE    260
+#define SPAWN_ARGPTR_BUF_SIZE 64
 
 /* static buffers */
 #define UTF8_STRERROR_BUF_SIZE 1024
@@ -70,7 +81,7 @@ int console_set_wide(int fd)
 {
 	int fmode;
 	DWORD con_mode;
-	HANDLE h;
+	intptr_t h;
 
 	/* -2 is a special descriptor value if stdin, stdout, and stderr aren't associated with a stream, see
 	  https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/get-osfhandle */
@@ -87,14 +98,14 @@ int console_set_wide(int fd)
 	if (-1 == fmode)
 		goto not_console;
 
-	h = (HANDLE)_get_osfhandle(fd);
+	h = _get_osfhandle(fd);
 
 	/* -2 is a special handle value when the file descriptor is not associated with a stream, see
 	  https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/get-osfhandle */
-	if ((HANDLE)-2 == h)
+	if (-2 == h)
 		goto not_console;
 
-	if (!GetConsoleMode(h, &con_mode))
+	if (!GetConsoleMode((HANDLE)h, &con_mode))
 		goto not_console;
 
 	/* Console stream is unbuffered, no need to flush it before changing mode.  */
@@ -161,7 +172,7 @@ static int utf8_rpl_chdir(const char *path)
 	return utf8_file_op(path, _wchdir);
 }
 
-static int utf8_rpl_stat(const char *path, struct _stat64 *buf)
+static int utf8_rpl_stat(const char *path, struct __stat64 *buf)
 {
 	wchar_t path_buf[PATH_BUF_SIZE];
 	wchar_t *const wpath = CVT_UTF8_TO_16_Z(path, path_buf);
@@ -333,13 +344,13 @@ static size_t utf8_read_from_console(
 				return (size_t)-1; /* error: no second part of utf16 surrogate pair */
 			}
 			/* should read whole wide-chars */
-			if (x < 0 || (x % sizeof(wchar_t))) {
+			if (x < 0 || ((unsigned)x % sizeof(wchar_t))) {
 				con_buf_offset = 0;
 				con_buf_filled = 0;
 				return (size_t)-1; /* read failed */
 			}
 			src = console_buf;
-			src_end = src + x/sizeof(wchar_t);
+			src_end = src + (unsigned)x/sizeof(wchar_t);
 		}
 
 		n = utf8_c16rtomb((utf8_char_t*)utf8_buf, *src++, &st);
@@ -619,7 +630,7 @@ static size_t utf8_write_to_console(int fd, const wchar_t wbuf[], const size_t s
 		const int ret = _write(fd, wb, (unsigned)(n*sizeof(wchar_t)));
 		if (ret != (int)(n*sizeof(wchar_t))) {
 			if (ret > 0)
-				wb += ret/sizeof(wchar_t);
+				wb += (unsigned)ret/sizeof(wchar_t);
 			break;
 		}
 		wb += n;
@@ -985,52 +996,22 @@ static int unicode_isctype_(unsigned c, c32ctype_t desc)
 	return unicode_isctype(c, (int)desc);
 }
 
-A_Use_decl_annotations
-#ifndef SAL_DEFS_H_INCLUDED
-ATTRIBUTE_PRINTF(format, 4, 0)
-#endif
-int vsnprintf_helper(char **buf, size_t buf_size, const char format[], va_list ap)
-{
-	char *b = *buf; /* buffer that cannot be reallocated, likely a stack-buffer */
-	for (;;) {
-		if (buf_size < 2)
-			buf_size = 128;
-		else {
-			int n = _vsnprintf(b, buf_size - 1, format, ap);
-			if (-1 != n) {
-				b[n] = '\0';
-				*buf = b;
-				return n;
-			}
-		}
-		if (b != *buf)
-			free(b);
-		if (buf_size < 65536)
-			buf_size *= 2;
-		else if (buf_size <= INT_MAX - 65536)
-			buf_size += 65536;
-		else {
-			errno = E2BIG;
-			return -1;
-		}
-		b = (char*)malloc(buf_size);
-		if (!b)
-			return -1;
-		assert(b != *buf);
-	}
-}
-
 ATTRIBUTE_PRINTF(format, 2, 0)
 static int utf8_vfprintf_to_console(int fd, const char *format, va_list ap)
 {
 	char stack_buf[FPRINTF_BUF_SIZE], *buf = stack_buf;
-	const int n = vsnprintf_helper(&buf, sizeof(stack_buf), format, ap);
-	if (n == 0) {
-		if (buf != stack_buf)
-			free(buf);
+	const int n = vsnprintf(buf, sizeof(stack_buf), format, ap);
+	if (n == 0)
 		return 0;
+	if (n < 0)
+		return -1;
+	if ((unsigned)n > sizeof(stack_buf)) {
+		buf = (char*)malloc((unsigned)n);
+		if (!buf)
+			return -1;
+		(void)vsnprintf(buf, (unsigned)n, format, ap);
 	}
-	if (-1 != n) {
+	{
 		wchar_t wstack_buf[WRITE_BUF_SIZE];
 		size_t sz = (size_t)n;
 		wchar_t *const wbuf = CVT_UTF8_TO_16(buf, &sz, wstack_buf);
@@ -1147,8 +1128,8 @@ static int utf8_rpl_mkstemp(char *templ)
 	}
 
 	fd = _wopen(wtempl,
-			O_RDWR | O_CREAT | O_EXCL,
-			S_IREAD | S_IWRITE);
+			_O_RDWR | _O_CREAT | _O_EXCL,
+			_S_IREAD | _S_IWRITE);
 
 	if (wbuf != path_buf)
 		free(wbuf);
@@ -1158,10 +1139,10 @@ static int utf8_rpl_mkstemp(char *templ)
 static intptr_t utf8_rpl_spawnvp(int mode, const char *cmdname, const char *const *argv)
 {
 	wchar_t cmd_buf[SPAWN_CMD_BUF_SIZE];
+	wchar_t *argptr_buf[SPAWN_ARGPTR_BUF_SIZE], **wargv = argptr_buf, **pwa;
 	wchar_t *const wcmd = CVT_UTF8_TO_16_Z(cmdname, cmd_buf);
 	size_t n;
 	const char *const *a;
-	wchar_t **wargv, **pwa;
 	intptr_t ret = -1;
 
 	if (!wcmd)
@@ -1172,7 +1153,9 @@ static intptr_t utf8_rpl_spawnvp(int mode, const char *cmdname, const char *cons
 		a++;
 	n = (size_t)(a - argv);
 
-	wargv = (wchar_t**)malloc((n + 1)*sizeof(*wargv));
+	if (n >= sizeof(argptr_buf)/sizeof(argptr_buf[0]))
+		wargv = (wchar_t**)malloc((n + 1)*sizeof(*wargv));
+
 	if (wargv) {
 
 		/* Convert each argument.  */
@@ -1189,12 +1172,116 @@ static intptr_t utf8_rpl_spawnvp(int mode, const char *cmdname, const char *cons
 
 		for (pwa = wargv; *pwa; pwa++)
 			free(*pwa);
-		free(wargv);
+		if (wargv != argptr_buf)
+			free(wargv);
 	}
 
 	if (wcmd != cmd_buf)
 		free(wcmd);
 	return ret;
+}
+
+static intptr_t utf8_rpl_spawnl(int mode, const char *cmdname, const char *arg0, ...)
+{
+	wchar_t cmd_buf[SPAWN_CMD_BUF_SIZE];
+	wchar_t *argptr_buf[SPAWN_ARGPTR_BUF_SIZE], **wargv = argptr_buf, **pwa;
+	wchar_t *const wcmd = CVT_UTF8_TO_16_Z(cmdname, cmd_buf);
+	size_t n = 1;
+	const char *a;
+	intptr_t ret = -1;
+	va_list args;
+
+	if (!wcmd)
+		return -1;
+
+	/* Count arguments.  */
+	va_start(args, arg0);
+	for (;; n++) {
+		a = va_arg(args, const char *);
+		if (!a)
+			break;
+	}
+	va_end(args);
+
+	if (n >= sizeof(argptr_buf)/sizeof(argptr_buf[0]))
+		wargv = (wchar_t**)malloc((n + 1)*sizeof(*wargv));
+
+	if (wargv) {
+
+		/* Convert each argument.  */
+		va_start(args, arg0);
+		for (n = 0;; n++) {
+			a = n ? va_arg(args, const char *) : arg0;
+			if (a) {
+				wchar_t *const wa = cvt_utf8_to_16_z(a, NULL, 0);
+				if (!wa)
+					break;
+				wargv[n] = wa;
+			}
+			else
+				break;
+		}
+		wargv[n] = NULL;
+		va_end(args);
+
+		if (!a)
+			ret = _wspawnvp(mode, wcmd, (const wchar_t *const *)wargv);
+
+		for (pwa = wargv; *pwa; pwa++)
+			free(*pwa);
+		if (wargv != argptr_buf)
+			free(wargv);
+	}
+
+	if (wcmd != cmd_buf)
+		free(wcmd);
+	return ret;
+}
+
+static FILE *utf8_rpl_popen(const char *command, const char *mode)
+{
+	wchar_t wmode[3];
+
+	if ('r' == mode[0])
+		wmode[0] = L'r';
+	else if ('w' == mode[0])
+		wmode[0] = L'w';
+	else {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	if ('\0' == mode[1])
+		wmode[1] = L'\0';
+	else {
+		if ('b' == mode[1])
+			wmode[1] = L'b';
+		else if ('t' == mode[1])
+			wmode[1] = L't';
+		else {
+			errno = EINVAL;
+			return NULL;
+		}
+
+		if ('\0' != mode[2]) {
+			errno = EINVAL;
+			return NULL;
+		}
+		wmode[2] = L'\0';
+	}
+
+	{
+		FILE *f;
+		wchar_t cmd_buf[POPEN_CMD_BUF_SIZE];
+		wchar_t *const wcmd = CVT_UTF8_TO_16_Z(command, cmd_buf);
+		if (!wcmd)
+			return NULL;
+
+		f = _wpopen(wcmd, wmode);
+		if (wcmd != cmd_buf)
+			free(wcmd);
+		return f;
+	}
 }
 
 /* will use mbstate_t object as utf8_state_t */
@@ -1292,4 +1379,6 @@ const struct localerpl utf8_funcs = {
 	(size_t (*)(unsigned *, const wchar_t *, size_t)) utf8_c16stoc32s,
 	(size_t (*)(wchar_t *, const unsigned *, size_t)) utf8_c32stoc16s,
 	utf8_rpl_spawnvp,
+	utf8_rpl_spawnl,
+	utf8_rpl_popen,
 };
