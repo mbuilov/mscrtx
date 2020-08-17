@@ -27,58 +27,18 @@
 #include <sys/stat.h>
 #include <process.h>
 
-/* Function attributes.  */
-#ifndef __GNUC__
-# define __attribute__(arg)
-#endif
-
-/* Annotate function parameter that cannot be NULL.  */
-#ifndef ATTRIBUTE_NONNULL
-# define ATTRIBUTE_NONNULL(a) __attribute__ ((__nonnull__ (a)))
-#endif
-
-/* Used in ATTRIBUTE_PRINTF.  */
-#ifndef ATTRIBUTE_PRINTF_FORMAT
-# ifdef __MINGW_PRINTF_FORMAT
-#  define ATTRIBUTE_PRINTF_FORMAT __MINGW_PRINTF_FORMAT
-# else
-#  define ATTRIBUTE_PRINTF_FORMAT __printf__
-# endif
-#endif
-
-/* Annotate parameters of printf-like function, e.g.:
-  ATTRIBUTE_PRINTF(fmt, 2, 3) int my_printf(int param, const char *fmt, ...);
-   or
-  ATTRIBUTE_PRINTF(fmt, 2, 0) int my_vprintf(int param, const char *fmt, va_list ap); */
-#ifndef ATTRIBUTE_PRINTF
-# if defined(_MSC_VER) && defined(_PREFAST_)
-#  define ATTRIBUTE_PRINTF(fmt, m, n) _At_(fmt, _Printf_format_string_)
-# else
-#  define ATTRIBUTE_PRINTF(fmt, m, n) \
-	__attribute__ ((__format__ (ATTRIBUTE_PRINTF_FORMAT, m, n))) \
-	ATTRIBUTE_NONNULL(m)
-# endif
-#endif
-
-/* Annotate parameters of printf-like function pointer, e.g.:
-  ATTRIBUTE_PRINTF_PTR(fmt, 2, 3) int (*my_printf)(int param, const char *fmt, ...);
-   or
-  ATTRIBUTE_PRINTF_PTR(fmt, 2, 0) int (*my_vprintf)(int param, const char *fmt, va_list ap); */
-#ifndef ATTRIBUTE_PRINTF_PTR
-# if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 2))
-#  define ATTRIBUTE_PRINTF_PTR(fmt, m, n) ATTRIBUTE_PRINTF(fmt, m, n)
-# else
-#  define ATTRIBUTE_PRINTF_PTR(fmt, m, n)
-# endif
-#endif
+/* for ATTRIBUTE_PRINTF_PTR */
+#include "mscrtx/attributes.h"
 
 /* in UTF-8 locale MB_CUR_MAX == 4 */
-#if MB_LEN_MAX < 4
-#undef MB_LEN_MAX
-#define MB_LEN_MAX 4
+#if defined MB_LEN_MAX && MB_LEN_MAX < 4
+# undef MB_LEN_MAX
+#endif
+#ifndef MB_LEN_MAX
+# define MB_LEN_MAX 4
 #endif
 
-struct _stat64;
+struct __stat64;
 typedef unsigned short c32ctype_t;
 
 struct localerpl {
@@ -106,7 +66,7 @@ struct localerpl {
 	int (*rpl_rename)(const char *old_name, const char *new_name);
 	int (*rpl_chdir)(const char *path);
 
-	int (*rpl_stat)(const char *path, struct _stat64 *buf);
+	int (*rpl_stat)(const char *path, struct __stat64 *buf);
 	int (*rpl_chmod)(const char *path, int mode);
 
 	ATTRIBUTE_PRINTF_PTR(format, 1, 2)
@@ -192,6 +152,8 @@ struct localerpl {
 	size_t (*rpl_c32stowcs)(wchar_t *dst, const unsigned *src, size_t n);
 
 	intptr_t (*rpl_spawnvp)(int mode, const char *cmdname, const char *const *argv);
+	intptr_t (*rpl_spawnl)(int mode, const char *cmdname, const char *arg0, ...);
+	FILE *(*rpl_popen)(const char *command, const char *mode);
 };
 
 /* Change localerpl global pointer.  */
@@ -202,22 +164,6 @@ void change_localerpl(int to_utf8);
 A_Check_return
 #endif
 int localerpl_is_utf8(void);
-
-/* Print to buffer, malloc'ate new buffer if necessary.
-   Returns -1 on error, else - number of chars printed, not counting terminating '\0'.
-   If successful, buffer is always '\0'-terminated.  */
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Check_return
-A_Nonnull_all_args
-A_At(buf, A_Notnull)
-A_At(*buf, A_Pre_writable_size(buf_size) A_Post_z A_Post_readable_size(return + 1))
-A_At(format, A_Printf_format_string)
-A_Success(return != -1)
-#endif
-#ifndef SAL_DEFS_H_INCLUDED
-ATTRIBUTE_PRINTF(format, 4, 0)
-#endif
-int vsnprintf_helper(char **const buf, size_t buf_size, const char format[], va_list ap);
 
 /* wcslen(3) */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
@@ -264,10 +210,10 @@ A_At(s2, A_In_z)
 #endif
 int c32scmp(const unsigned *s1, const unsigned *s2);
 
-#ifndef LOCALE_RPL_IMPL
-
 /* Global pointer.  */
 extern const struct localerpl *localerpl;
+
+#ifndef LOCALE_RPL_IMPL
 
 /* utf8/utf16/utf32 conversion routines */
 #ifdef __cplusplus
@@ -1289,7 +1235,25 @@ static inline int clearenv(void)
 #ifdef spawnvp
 #undef spawnvp
 #endif
-#define spawnvp localerpl->rpl_spawnvp
+#define spawnvp localerpl_rpl_spawnvp
+static inline intptr_t spawnvp(int mode, const char *cmdname, const char *const *argv)
+{
+	return localerpl->rpl_spawnvp(mode, cmdname, argv);
+}
+
+#ifdef spawnl
+#undef spawnl
+#endif
+#define spawnl localerpl->rpl_spawnl
+
+#ifdef popen
+#undef popen
+#endif
+#define popen localerpl_rpl_popen
+static inline FILE *popen(const char *command, const char *mode)
+{
+	return localerpl->rpl_popen(command, mode);
+}
 
 #endif /* LOCALE_RPL_IMPL */
 
