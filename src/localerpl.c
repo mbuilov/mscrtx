@@ -9,8 +9,8 @@
 /* Default replacements - mostly direct calls to standard C library API.  */
 
 #include <errno.h>
-#include <ctype.h>
 #include <wctype.h>
+#include <ctype.h>
 
 #define LOCALE_RPL_IMPL
 #include "mscrtx/localerpl.h"
@@ -18,6 +18,14 @@
 
 #ifndef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 #define A_Use_decl_annotations
+#endif
+
+#ifndef FALLTHROUGH
+# ifdef __clang__
+#  define FALLTHROUGH __attribute__((fallthrough));
+# else
+#  define FALLTHROUGH
+# endif
 #endif
 
 #ifndef _MSC_VER
@@ -55,8 +63,9 @@ static size_t rpl_mbrtoc16(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 
 static size_t rpl_mbrtoc32(unsigned *pwi, const char *s, size_t n, mbstate_t *ps)
 {
-	const size_t ret = mbrtowc((wchar_t*)pwi, s, n, ps);
-	*pwi = *(wchar_t*)pwi;
+	void *const pwi_ = pwi;
+	const size_t ret = mbrtowc((wchar_t*)pwi_, s, n, ps);
+	*(unsigned*)pwi_ = *(wchar_t*)pwi_;
 	assert(*pwi < 0xD800 || 0xDFFF < *pwi); /* assume not a utf16-surrograte */
 	return ret;
 }
@@ -83,12 +92,31 @@ size_t c32slen(const unsigned *str)
 	return (size_t)(s - str);
 }
 
+static unsigned *cast_unsigned_ptr(const unsigned *p)
+{
+#if defined __GNUC__ && __GNUC__ >= 6
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual" /* cast from type 'const unsigned int*' to type 'unsigned int*' casts away qualifiers */
+#endif
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcast-qual" /* cast from 'const unsigned int *' to 'unsigned int *' drops const qualifier */
+#endif
+	return (unsigned*)p;
+#if defined __GNUC__ && __GNUC__ >= 6
+#pragma GCC diagnostic pop
+#endif
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+}
+
 A_Use_decl_annotations
 unsigned *c32schr(const unsigned *s, unsigned c)
 {
 	for (;; s++) {
 		if (*s == c)
-			return (unsigned*)s;
+			return cast_unsigned_ptr(s);
 		if (!*s)
 			return NULL;
 	}
@@ -102,7 +130,7 @@ unsigned *c32srchr(const unsigned *s, unsigned c)
 		if (*s == c)
 			r = s;
 		if (!*s)
-			return (unsigned*)r;
+			return cast_unsigned_ptr(r);
 	}
 }
 
@@ -111,7 +139,7 @@ unsigned *c32schrnul(const unsigned *s, unsigned c)
 {
 	for (;; s++) {
 		if (*s == c || !*s)
-			return (unsigned*)s;
+			return cast_unsigned_ptr(s);
 	}
 }
 
@@ -286,14 +314,15 @@ static int rpl_c32isctype(unsigned c, c32ctype_t desc)
 
 static size_t rpl_mbstoc32s(unsigned *dst, const char *src, size_t n)
 {
-	const size_t ret = mbstowcs((wchar_t*)dst, src, n);
-	if ((size_t)-1 != ret && dst) {
+	void *const dst_ = dst;
+	const size_t ret = mbstowcs((wchar_t*)dst_, src, n);
+	if ((size_t)-1 != ret && dst_) {
 		size_t i = ret + (ret < n);
 		while (i) {
-			wchar_t *const s = (wchar_t*)dst;
+			wchar_t *const s = (wchar_t*)dst_;
 			i--;
 			assert(s[i] < 0xD800 || 0xDFFF < s[i]); /* assume not a utf16-surrograte */
-			dst[i] = s[i];
+			((unsigned*)dst_)[i] = s[i];
 		}
 	}
 	return ret;
@@ -302,7 +331,11 @@ static size_t rpl_mbstoc32s(unsigned *dst, const char *src, size_t n)
 static size_t rpl_c32stombs(char *dst, const unsigned *src, size_t n)
 {
 	size_t sz;
-	mbstate_t ps = {0};
+	mbstate_t ps = {
+#ifndef __cplusplus
+		0
+#endif
+	};
 	char buf[6/*MB_CUR_MAX*/];
 	if (dst) {
 		const char *const de = dst + n;
@@ -330,13 +363,19 @@ static size_t rpl_c32stombs(char *dst, const unsigned *src, size_t n)
 				char *const c = buf + sz;
 				switch (sz) {
 					default: assert(0);
+					FALLTHROUGH
+					/* fallthrough */
 					case 5: dst[-5] = c[-5];
+					FALLTHROUGH
 					/* fallthrough */
 					case 4: dst[-4] = c[-4];
+					FALLTHROUGH
 					/* fallthrough */
 					case 3: dst[-3] = c[-3];
+					FALLTHROUGH
 					/* fallthrough */
 					case 2: dst[-2] = c[-2];
+					FALLTHROUGH
 					/* fallthrough */
 					case 1: dst[-1] = c[-1];
 				}
@@ -394,8 +433,8 @@ static int rpl_mkstemp(char *templ)
 	char *const ret = _mktemp(templ);
 	if (ret) {
 		const int fd = _open(ret,
-			O_RDWR | O_CREAT | O_EXCL,
-			S_IREAD | S_IWRITE);
+			_O_RDWR | _O_CREAT | _O_EXCL,
+			_S_IREAD | _S_IWRITE);
 		return fd;
 	}
 	return -1;
@@ -403,7 +442,7 @@ static int rpl_mkstemp(char *templ)
 
 static char **rpl_environ(void)
 {
-	return environ;
+	return _environ;
 }
 
 static int rpl_setenv(const char *name, const char *value, int overwrite)
@@ -452,7 +491,7 @@ static int rpl_unsetenv(const char *name)
 
 static int rpl_clearenv(void)
 {
-	environ = NULL;
+	_environ = NULL;
 	return 0;
 }
 
@@ -514,7 +553,7 @@ static const struct localerpl rpl_funcs = {
 	_stricmp,
 	tolower,
 	toupper,
-	isascii,
+	__isascii,
 	isalnum,
 	isalpha,
 	isblank,
@@ -551,6 +590,8 @@ static const struct localerpl rpl_funcs = {
 	rpl_wcstoc32s,
 	rpl_c32stowcs,
 	_spawnvp,
+	_spawnl,
+	_popen,
 };
 
 const struct localerpl *localerpl = &rpl_funcs;
