@@ -27,7 +27,7 @@ A_Nonnull_all_args
 A_At(buf, A_Pre_writable_size(bufsz) A_Post_readable_size(return))
 A_Success(return >= 0)
 #endif
-int wreadlinkfd(const void *h, wchar_t buf[], const size_t bufsz);
+int wreadlinkfd(void *h, wchar_t buf[], const size_t bufsz);
 
 /* Get the path symbolic link points to.
    Assume bufsiz is the buf size in wide-characters.
@@ -66,7 +66,7 @@ A_Nonnull_all_args
 A_At(buf, A_Pre_writable_size(bufsz) A_Post_readable_size(return))
 A_Success(return >= 0)
 #endif
-int readlinkfd(const void *h, char buf[], const size_t bufsz);
+int readlinkfd(void *h, char buf[], const size_t bufsz);
 
 /* Get the path symbolic link points to.
    Returns number of bytes placed in buf, -1 if failed.
