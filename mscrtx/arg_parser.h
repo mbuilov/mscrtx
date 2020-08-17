@@ -28,8 +28,7 @@ struct wide_arg *arg_parse_command_line(int *const argc/*out*/);
 
 /* Free arguments list created by arg_parse_command_line() */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Nonnull_all_args
-A_At(list, A_In A_Post_ptr_invalid)
+A_At(list, A_In_opt A_Post_ptr_invalid)
 #endif
 void arg_free_wide_args(struct wide_arg *list);
 
@@ -57,13 +56,13 @@ struct arg_convert_err {
   from wide-character string to multibyte-string. */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Check_return
-A_Nonnull_arg(2)
-A_At(list, A_In)
+A_When(argc, A_At(list, A_In))
+A_When(!argc, A_At(list, A_Null))
 A_At(err, A_On_failure(A_Out_opt))
 A_Success(return)
 #endif
 char **arg_convert_wide_args(const unsigned argc, const struct wide_arg *list,
-	struct arg_convert_err *err/*NULL?,out*/);
+	struct arg_convert_err *const err/*NULL?,out*/);
 
 /* Free arguments array allocated by arg_convert_wide_args() */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
@@ -71,5 +70,32 @@ A_Nonnull_all_args
 A_At(argv, A_In A_Post_ptr_invalid)
 #endif
 void arg_free_argv(char **const argv);
+
+struct arg_convert_mb_err {
+	unsigned number; /* 0-based number of multibyte-character argument, -1 if not set */
+	const char *arg; /* multibyte-character argument, NULL if not set */
+};
+
+/* Convert program arguments from multibyte to wide-char according to current locale.
+   Returns NULL-terminated array of pointers to L'\0'-terminated strings.
+   Returns NULL on error and, if err != NULL, fills err:
+  err->number and err->arg are will be set only if failed to convert an argument
+  from multibyte-string to wide-character string. */
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_arg(1)
+A_At(argv, A_In)
+A_At(err, A_On_failure(A_Out_opt))
+A_Success(return)
+#endif
+wchar_t **arg_convert_mb_args(char *const argv[]/*!=NULL*/,
+	struct arg_convert_mb_err *const err/*NULL?,out*/);
+
+/* Free arguments array allocated by arg_convert_mb_args() */
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Nonnull_all_args
+A_At(wargv, A_In A_Post_ptr_invalid)
+#endif
+void arg_free_wargv(wchar_t **const wargv);
 
 #endif /* ARG_PARSER_H_INCLUDED */

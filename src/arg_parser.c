@@ -15,6 +15,11 @@
 #include "mscrtx/arg_parser.h"
 #include "mscrtx/localerpl.h"
 
+/* not defined under MinGW.org */
+#ifndef INT_MAX
+#define INT_MAX ((unsigned)-1/2)
+#endif
+
 #ifndef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 #define A_Use_decl_annotations
 #endif
@@ -338,7 +343,7 @@ err:
 	return NULL;
 }
 
-/* Free arguments array allocated by arg_helper_convert_wargv().  */
+/* Free arguments array allocated by arg_convert_wide_args().  */
 A_Use_decl_annotations
 void arg_free_argv(char **const argv)
 {
@@ -348,11 +353,21 @@ void arg_free_argv(char **const argv)
 	free(argv);
 }
 
+/* Free arguments array allocated by arg_convert_mb_args().  */
+A_Use_decl_annotations
+void arg_free_wargv(wchar_t **const wargv)
+{
+	void *const arr = wargv;
+	arg_free_argv((char**)arr);
+}
+
 #ifndef PRAGMA_WARNING_PUSH
 #ifdef _MSC_VER
 # define PRAGMA_WARNING_PUSH __pragma(warning(push))
-#elif defined __GNUC__ && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#elif defined __GNUC__ && __GNUC__ > 4 - (__GNUC_MINOR__ >= 6)
 # define PRAGMA_WARNING_PUSH _Pragma ("GCC diagnostic push")
+#elif defined __clang__
+# define PRAGMA_WARNING_PUSH _Pragma ("clang diagnostic push")
 #else
 # define PRAGMA_WARNING_PUSH
 #endif
@@ -361,19 +376,25 @@ void arg_free_argv(char **const argv)
 #ifndef PRAGMA_WARNING_POP
 #ifdef _MSC_VER
 # define PRAGMA_WARNING_POP __pragma(warning(pop))
-#elif defined __GNUC__ && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#elif defined __GNUC__ && __GNUC__ > 4 - (__GNUC_MINOR__ >= 6)
 # define PRAGMA_WARNING_POP _Pragma ("GCC diagnostic pop")
+#elif defined __clang__
+# define PRAGMA_WARNING_POP _Pragma ("clang diagnostic pop")
 #else
 # define PRAGMA_WARNING_POP
 #endif
 #endif
 
-#ifndef PRAGMA_WARNING_DISABLE_FORMAT_WARNING
-#ifdef _MSC_VER
-/* 4127 - conditional expression is constant */
+#ifndef PRAGMA_WARNING_DISABLE_COND_IS_CONST
+#ifdef __clang__
+# define PRAGMA_WARNING_DISABLE_COND_IS_CONST \
+	_Pragma ("clang diagnostic ignored \"-Wtautological-constant-out-of-range-compare\"") \
+	_Pragma ("clang diagnostic ignored \"-Wtautological-type-limit-compare\"")
+#elif defined __GNUC__ && __GNUC__ > 4 - (__GNUC_MINOR__ >= 6)
+# define PRAGMA_WARNING_DISABLE_COND_IS_CONST \
+	_Pragma ("GCC diagnostic ignored \"-Wtype-limits\"")
+#elif defined _MSC_VER
 # define PRAGMA_WARNING_DISABLE_COND_IS_CONST __pragma(warning(disable:4127))
-#elif defined __GNUC__ && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
-# define PRAGMA_WARNING_DISABLE_COND_IS_CONST _Pragma ("GCC diagnostic ignored \"-Wtype-limits\"")
 #else
 # define PRAGMA_WARNING_DISABLE_COND_IS_CONST
 #endif
@@ -381,7 +402,7 @@ void arg_free_argv(char **const argv)
 
 A_Use_decl_annotations
 char **arg_convert_wide_args(const unsigned argc, const struct wide_arg *list,
-	struct arg_convert_err *err/*NULL?,out*/)
+	struct arg_convert_err *const err/*NULL?,out*/)
 {
 	/* Note: argv array must be NULL-terminated.  */
 PRAGMA_WARNING_PUSH
@@ -396,8 +417,8 @@ PRAGMA_WARNING_POP
 				if ((size_t)-1 != need) {
 					char *const a = (char*)malloc(need + 1);
 					if (a) {
-						(void)wcstombs(a, list->value, need + 1);
 						*p = a;
+						(void)wcstombs(a, list->value, need + 1);
 						continue;
 					}
 					if (err) {
@@ -415,6 +436,62 @@ PRAGMA_WARNING_POP
 			}
 			*p = NULL;
 			return argv;
+		}
+	}
+	else
+		errno = E2BIG;
+	if (err) {
+		err->number = (unsigned)-1;
+		err->arg = NULL;
+	}
+	return NULL;
+}
+
+static size_t get_argc(char *const argv[])
+{
+	char *const *a = argv;
+	for (; *a; a++);
+	return (size_t)(a - argv);
+}
+
+A_Use_decl_annotations
+wchar_t **arg_convert_mb_args(char *const argv[]/*!=NULL*/,
+	struct arg_convert_mb_err *const err/*NULL?,out*/)
+{
+	/* Note: argv array must be NULL-terminated.  */
+	const size_t argc = get_argc(argv);
+PRAGMA_WARNING_PUSH
+PRAGMA_WARNING_DISABLE_COND_IS_CONST
+	if (argc <= (unsigned)-1 && (unsigned)argc < (size_t)-1/sizeof(wchar_t*)) {
+PRAGMA_WARNING_POP
+		wchar_t **const wargv = (wchar_t**)malloc(sizeof(*wargv)*(argc + 1));
+		if (wargv) {
+			wchar_t **p = wargv;
+			char *const *a = argv;
+			for (; *a; a++, p++) {
+				const size_t need = mbstowcs(NULL, *a, 0);
+				if ((size_t)-1 != need) {
+					wchar_t *const w = (wchar_t*)malloc(sizeof(wchar_t)*(need + 1));
+					if (w) {
+						*p = w;
+						(void)mbstowcs(w, *a, need + 1);
+						continue;
+					}
+					if (err) {
+						err->number = (unsigned)-1;
+						err->arg = NULL;
+					}
+				}
+				else if (err) {
+					err->number = (unsigned)(a - argv);
+					err->arg = *a;
+				}
+				*p = NULL;
+				arg_free_wargv(wargv);
+				return NULL;
+			}
+			*p = NULL;
+			return wargv;
 		}
 	}
 	else
