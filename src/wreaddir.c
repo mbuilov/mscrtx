@@ -29,10 +29,38 @@
 # endif
 #endif
 
+#ifndef PRAGMA_WARNING_PUSH
+#if defined __clang__
+# define PRAGMA_WARNING_PUSH _Pragma ("clang diagnostic push")
+#else
+# define PRAGMA_WARNING_PUSH
+#endif
+#endif
+
+#ifndef PRAGMA_WARNING_POP
+#if defined __clang__
+# define PRAGMA_WARNING_POP _Pragma ("clang diagnostic pop")
+#else
+# define PRAGMA_WARNING_POP
+#endif
+#endif
+
+#ifndef PRAGMA_WARNING_DISABLE_COND_IS_CONST
+#if defined __clang__
+# define PRAGMA_WARNING_DISABLE_COND_IS_CONST \
+  _Pragma ("clang diagnostic ignored \"-Wtautological-constant-out-of-range-compare\"")
+#else
+# define PRAGMA_WARNING_DISABLE_COND_IS_CONST
+#endif
+#endif
+
 static struct dir_fd_ *alloc_dir_fd(const DWORD abs_sz)
 {
 	const size_t head = OFFSETOF(struct dir_fd_, abs_path);
+PRAGMA_WARNING_PUSH
+PRAGMA_WARNING_DISABLE_COND_IS_CONST
 	if (abs_sz <= ((size_t)-1 - head)/sizeof(wchar_t)) {
+PRAGMA_WARNING_POP
 		const size_t sz = head + (size_t)abs_sz*sizeof(wchar_t);
 		return (struct dir_fd_*)malloc(sz);
 	}
@@ -146,7 +174,10 @@ static struct dir_fd_ *alloc_win_find(const DWORD abs_sz)
 {
 	const size_t head = OFFSETOF(struct win_find, dfd.abs_path);
 	/* Reserve 2 wide-characters for "\*".  */
+PRAGMA_WARNING_PUSH
+PRAGMA_WARNING_DISABLE_COND_IS_CONST
 	if (abs_sz <= ((size_t)-1 - head)/sizeof(wchar_t) - 2) {
+PRAGMA_WARNING_POP
 		const size_t sz = head + ((size_t)abs_sz + 2)*sizeof(wchar_t);
 		struct win_find *const f = (struct win_find*)malloc(sz);
 		if (f)
