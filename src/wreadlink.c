@@ -15,12 +15,18 @@
 #include "mscrtx/xstat.h" /* xpathwc */
 #include "mscrtx/wreadlink.h"
 
-#ifndef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-#define A_Use_decl_annotations
-#endif
-
+/* not defined under MinGW.org */
 #ifndef INT_MAX
 #define INT_MAX ((unsigned)-1/2)
+#endif
+
+/* not defined under MinGW.org */
+#ifndef ENOTSUP
+#define ENOTSUP 129
+#endif
+
+#ifndef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+#define A_Use_decl_annotations
 #endif
 
 /* Ntifs.h may be not available in application WDK,
@@ -50,11 +56,11 @@ typedef struct reparse_buf {
 			UCHAR DataBuffer[1];
 		} GenericReparseBuffer;
 	} u;
-} REPARSE_DATA_BUFFER;
+} REPARSE_DATA_BUF;
 
 /* Note: caller must free(*dyn_rdb) on _any_ return */
-static REPARSE_DATA_BUFFER *do_ioctl(const HANDLE h, REPARSE_DATA_BUFFER *rdb,
-	DWORD rdb_size, REPARSE_DATA_BUFFER **const dyn_rdb, DWORD *filled)
+static REPARSE_DATA_BUF *do_ioctl(const HANDLE h, REPARSE_DATA_BUF *rdb,
+	DWORD rdb_size, REPARSE_DATA_BUF **const dyn_rdb, DWORD *filled)
 {
 	/* Assume path is less than 32768 wide characters.  */
 	const DWORD add_by = 32768*sizeof(WCHAR);
@@ -73,7 +79,7 @@ static REPARSE_DATA_BUFFER *do_ioctl(const HANDLE h, REPARSE_DATA_BUFFER *rdb,
 		rdb_size += add_by;
 		if (*dyn_rdb)
 			free(*dyn_rdb);
-		*dyn_rdb = (REPARSE_DATA_BUFFER*)malloc(rdb_size);
+		*dyn_rdb = (REPARSE_DATA_BUF*)malloc(rdb_size);
 		if (!*dyn_rdb)
 			return NULL;
 		rdb = *dyn_rdb;
@@ -82,8 +88,8 @@ static REPARSE_DATA_BUFFER *do_ioctl(const HANDLE h, REPARSE_DATA_BUFFER *rdb,
 }
 
 /* Note: caller must free(*dyn_rdb) on _any_ return */
-static WCHAR *readlink_ioctl(const HANDLE h, REPARSE_DATA_BUFFER *rdb,
-	DWORD rdb_size, REPARSE_DATA_BUFFER **const dyn_rdb, USHORT *const link_len)
+static WCHAR *readlink_ioctl(const HANDLE h, REPARSE_DATA_BUF *rdb,
+	DWORD rdb_size, REPARSE_DATA_BUF **const dyn_rdb, USHORT *const link_len)
 {
 	DWORD filled;
 
@@ -135,16 +141,16 @@ notsup:
 }
 
 A_Use_decl_annotations
-int wreadlinkfd(const void *h, wchar_t buf[], const size_t bufsz)
+int wreadlinkfd(void *h, wchar_t buf[], const size_t bufsz)
 {
 	int ret = -1;
 	union {
-		REPARSE_DATA_BUFFER buf;
-		char mem[sizeof(REPARSE_DATA_BUFFER) + MAX_PATH*sizeof(WCHAR)];
+		REPARSE_DATA_BUF buf;
+		char mem[sizeof(REPARSE_DATA_BUF) + MAX_PATH*sizeof(WCHAR)];
 	} u;
 	USHORT link_len;
-	REPARSE_DATA_BUFFER *dyn_rdb = NULL;
-	const WCHAR *link = readlink_ioctl((HANDLE)h, &u.buf, sizeof(u), &dyn_rdb, &link_len);
+	REPARSE_DATA_BUF *dyn_rdb = NULL;
+	const WCHAR *const link = readlink_ioctl((HANDLE)h, &u.buf, sizeof(u), &dyn_rdb, &link_len);
 	if (link) {
 		if (link_len <= bufsz) {
 			memcpy(buf, link, link_len*sizeof(*link));
@@ -161,16 +167,16 @@ int wreadlinkfd(const void *h, wchar_t buf[], const size_t bufsz)
 }
 
 A_Use_decl_annotations
-int readlinkfd(const void *h, char buf[], const size_t bufsz)
+int readlinkfd(void *h, char buf[], const size_t bufsz)
 {
 	int ret = -1;
 	union {
-		REPARSE_DATA_BUFFER buf;
-		char mem[sizeof(REPARSE_DATA_BUFFER) + MAX_PATH*sizeof(wchar_t)];
+		REPARSE_DATA_BUF buf;
+		char mem[sizeof(REPARSE_DATA_BUF) + MAX_PATH*sizeof(wchar_t)];
 	} u;
 	USHORT link_len;
-	REPARSE_DATA_BUFFER *dyn_rdb = NULL;
-	const WCHAR *link = readlink_ioctl((HANDLE)h, &u.buf, sizeof(u), &dyn_rdb, &link_len);
+	REPARSE_DATA_BUF *dyn_rdb = NULL;
+	const WCHAR *const link = readlink_ioctl((HANDLE)h, &u.buf, sizeof(u), &dyn_rdb, &link_len);
 	if (link) {
 		/* Convert wide-character path to multibyte string.  */
 		const size_t converted = wcstombs(buf, link, bufsz);
