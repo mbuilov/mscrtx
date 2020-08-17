@@ -8,11 +8,6 @@
 
 #include <stdio.h>
 #include <errno.h>
-
-#if !defined _WIN32_WINNT || _WIN32_WINNT < 0x501
-# undef _WIN32_WINNT
-# define _WIN32_WINNT 0x501
-#endif
 #include <winsock2.h>
 
 #include "mscrtx/socket_file.h"
