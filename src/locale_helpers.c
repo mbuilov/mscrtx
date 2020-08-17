@@ -21,6 +21,11 @@
 /* maximum locale name length */
 #define LOCALE_BUF_SIZE 128
 
+/* not defined for _WIN32_WINNT < _WIN32_WINNT_VISTA */
+#ifndef LOCALE_CUSTOM_UNSPECIFIED
+#define LOCALE_CUSTOM_UNSPECIFIED 0x1000
+#endif
+
 struct lang_tag {
 	const char *tag;
 	const char *lang_country;
