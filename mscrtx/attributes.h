@@ -33,7 +33,7 @@
 /* MinGW.org */
 #  define ATTRIBUTE_PRINTF(fmt, m, n) __Wformat_mingw_printf(m, n) ATTRIBUTE_NONNULL(m)
 # elif defined(__MINGW_PRINTF_FORMAT) && !defined(__clang__)
-/* Mingw64 */
+/* mingw-w64 */
 #  define ATTRIBUTE_PRINTF(fmt, m, n) \
 	__attribute__ ((__format__ (__MINGW_PRINTF_FORMAT, m, n))) ATTRIBUTE_NONNULL(m)
 # else
