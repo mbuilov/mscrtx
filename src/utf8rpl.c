@@ -52,6 +52,7 @@
 #define POPEN_CMD_BUF_SIZE    512
 #define SPAWN_CMD_BUF_SIZE    260
 #define SPAWN_ARGPTR_BUF_SIZE 64
+#define STRFTIME_BUF_SIZE     256
 
 /* static buffers */
 #define UTF8_STRERROR_BUF_SIZE 1024
@@ -1092,6 +1093,53 @@ static char *utf8_rpl_strerror(int error_number)
 	return NULL;
 }
 
+static size_t utf8_rpl_strftime(char *s, size_t mx, const char *fmt, const struct tm *t)
+{
+	size_t r, wfmt_sz, rem_sz;
+	wchar_t strftime_buf[STRFTIME_BUF_SIZE], *wout_buf;
+	wchar_t *const wfmt = CVT_UTF8_TO_16_Z_SZ(fmt, strftime_buf, &wfmt_sz);
+	if (!wfmt)
+		return 0;
+
+	if (wfmt != strftime_buf)
+		wfmt_sz = 0;
+
+	rem_sz = sizeof(strftime_buf)/sizeof(strftime_buf[0]) - wfmt_sz;
+	wout_buf = strftime_buf + wfmt_sz;
+	r = wcsftime(wout_buf, rem_sz, wfmt, t);
+
+	if (!r) {
+		/* May be output buffer is too small?
+		   One wchar_t per one utf8-byte in the output buffer should be enough.  */
+		if (mx > (size_t)-1/sizeof(wchar_t)) {
+			errno = EINVAL;
+			goto out;
+		}
+
+		wout_buf = (wchar_t*)malloc(sizeof(wchar_t)*mx);
+		if (!wout_buf)
+			goto out;
+
+		r = wcsftime(wout_buf, mx, wfmt, t);
+	}
+
+	if (r) {
+		const utf16_char_t *w = (const utf16_char_t*)wout_buf;
+		utf8_char_t *b = (utf8_char_t*)s;
+		r = utf16_to_utf8(&w, &b, mx, r);
+		if (r > mx)
+			r = 0; /* Output buffer is too small.  */
+	}
+
+	if (wout_buf != strftime_buf + wfmt_sz)
+		free(wout_buf);
+
+out:
+	if (!wfmt_sz)
+		free(wfmt);
+	return r;
+}
+
 static int utf8_rpl_mkstemp(char *templ)
 {
 	int fd;
@@ -1318,6 +1366,7 @@ const struct localerpl utf8_funcs = {
 	utf8_rpl_vprintf,
 	utf8_rpl_vfprintf,
 	utf8_rpl_strerror,
+	utf8_rpl_strftime,
 	utf8_rpl_mkstemp,
 	utf8_environ,
 	utf8_getenv,
