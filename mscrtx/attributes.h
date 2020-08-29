@@ -21,6 +21,12 @@
 # define ATTRIBUTE_NONNULL(a) __attribute__ ((__nonnull__ (a)))
 #endif
 
+/* Must use MinGW.org/mingw-w64 variants of *printf functions,
+   which support c99 "%zu"/"%llu" format specifiers.  */
+#if defined(__USE_MINGW_ANSI_STDIO) && !__USE_MINGW_ANSI_STDIO
+# error Must use MinGW.org/mingw-w64 variants of printf functions
+#endif
+
 /* Annotate parameters of printf-like function, e.g.:
   ATTRIBUTE_PRINTF(fmt, 2, 3) int my_printf(int param, const char *fmt, ...);
    or
