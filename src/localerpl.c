@@ -84,7 +84,7 @@ static size_t rpl_c32rtomb(char *s, unsigned wi, mbstate_t *ps)
 }
 
 A_Use_decl_annotations
-size_t c32slen(const unsigned *str)
+size_t localerpl_rpl_c32slen(const unsigned *str)
 {
 	const unsigned *s = str;
 	while (*s)
@@ -112,7 +112,7 @@ static unsigned *cast_unsigned_ptr(const unsigned *p)
 }
 
 A_Use_decl_annotations
-unsigned *c32schr(const unsigned *s, unsigned c)
+unsigned *localerpl_rpl_c32schr(const unsigned *s, unsigned c)
 {
 	for (;; s++) {
 		if (*s == c)
@@ -123,7 +123,7 @@ unsigned *c32schr(const unsigned *s, unsigned c)
 }
 
 A_Use_decl_annotations
-unsigned *c32srchr(const unsigned *s, unsigned c)
+unsigned *localerpl_rpl_c32srchr(const unsigned *s, unsigned c)
 {
 	const unsigned *r = NULL;
 	for (;; s++) {
@@ -135,7 +135,7 @@ unsigned *c32srchr(const unsigned *s, unsigned c)
 }
 
 A_Use_decl_annotations
-unsigned *c32schrnul(const unsigned *s, unsigned c)
+unsigned *localerpl_rpl_c32schrnul(const unsigned *s, unsigned c)
 {
 	for (;; s++) {
 		if (*s == c || !*s)
@@ -144,7 +144,7 @@ unsigned *c32schrnul(const unsigned *s, unsigned c)
 }
 
 A_Use_decl_annotations
-int c32scmp(const unsigned *s1, const unsigned *s2)
+int localerpl_rpl_c32scmp(const unsigned *s1, const unsigned *s2)
 {
 	for (;; s1++, s2++) {
 		if (*s1 < *s2)
@@ -168,8 +168,8 @@ static int proc_c32s(const unsigned *s1, const unsigned *s2,
 {
 	int ret;
 	wchar_t buf[COLL_BUF_SZ], *ws1, *ws2;
-	const size_t len1 = c32slen(s1);
-	const size_t len2 = c32slen(s2);
+	const size_t len1 = localerpl_rpl_c32slen(s1);
+	const size_t len2 = localerpl_rpl_c32slen(s2);
 	size_t avail = sizeof(buf)/sizeof(buf[0]);
 	if (len1 < avail) {
 		ws1 = buf;
@@ -425,7 +425,7 @@ static size_t rpl_c32stowcs(wchar_t *dst, const unsigned *src, size_t n)
 		}
 		return i;
 	}
-	return c32slen(src);
+	return localerpl_rpl_c32slen(src);
 }
 
 static int rpl_mkstemp(char *templ)
@@ -532,6 +532,7 @@ static const struct localerpl rpl_funcs = {
 	vprintf,
 	vfprintf,
 	strerror,
+	strftime,
 	rpl_mkstemp,
 	rpl_environ,
 	getenv,
