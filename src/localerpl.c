@@ -22,7 +22,7 @@
 
 #ifndef FALLTHROUGH
 # ifdef __clang__
-#  define FALLTHROUGH __attribute__((fallthrough));
+#  define FALLTHROUGH __attribute__((fallthrough))
 # else
 #  define FALLTHROUGH
 # endif
@@ -363,19 +363,19 @@ static size_t rpl_c32stombs(char *dst, const unsigned *src, size_t n)
 				char *const c = buf + sz;
 				switch (sz) {
 					default: assert(0);
-					FALLTHROUGH
+					FALLTHROUGH;
 					/* fallthrough */
 					case 5: dst[-5] = c[-5];
-					FALLTHROUGH
+					FALLTHROUGH;
 					/* fallthrough */
 					case 4: dst[-4] = c[-4];
-					FALLTHROUGH
+					FALLTHROUGH;
 					/* fallthrough */
 					case 3: dst[-3] = c[-3];
-					FALLTHROUGH
+					FALLTHROUGH;
 					/* fallthrough */
 					case 2: dst[-2] = c[-2];
-					FALLTHROUGH
+					FALLTHROUGH;
 					/* fallthrough */
 					case 1: dst[-1] = c[-1];
 				}
