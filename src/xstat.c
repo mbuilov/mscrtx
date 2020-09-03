@@ -197,6 +197,7 @@ static unsigned leap_years_after_1900(const unsigned cy/*since 1900*/)
 		+ (y + 300)/400; /* But plus every 400-th year since 1600 */
 }
 
+A_Use_decl_annotations
 xtime_t xtimegm(
 	const unsigned year/*since 1900,>70*/,
 	const unsigned month/*0..11*/,
