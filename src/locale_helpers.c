@@ -894,10 +894,9 @@ static unsigned cmp_tags(const char info_tag[], const char tag[])
 A_Check_return
 A_Nonnull_all_args
 A_At(tag, A_In_z)
-A_At(base_len, A_Out_range(>,0))
 A_Success(return)
 #endif
-static const struct lang_tag *find_tag(const char tag[], unsigned *const base_len)
+static const struct lang_tag *find_tag(const char tag[])
 {
 	unsigned i = 0, k = 0;
 	if (!tag[0] || !tag[1])
@@ -909,10 +908,8 @@ static const struct lang_tag *find_tag(const char tag[], unsigned *const base_le
 		memcpy(&ik, info->tag, 2);
 		if (k == ik) {
 			const unsigned len = cmp_tags(info->tag, tag);
-			if (len) {
-				*base_len = len;
+			if (len)
 				return info;
-			}
 		}
 	}
 	return NULL;
@@ -959,28 +956,28 @@ A_Check_return
 A_Nonnull_all_args
 A_At(cp, A_In_z)
 #endif
-static int is_utf8_code_page(const wchar_t cp[])
+static int is_utf8_code_page(const char cp[])
 {
 	return
-		(cp[0] == L'6' &&
-		 cp[1] == L'5' &&
-		 cp[2] == L'0' &&
-		 cp[3] == L'0' &&
-		 cp[4] == L'1' &&
-		 cp[5] == L'\0') ||
-		((cp[0] == L'c' || cp[0] == L'C') &&
-		 (cp[1] == L'p' || cp[1] == L'P') &&
-		  cp[2] == L'6' &&
-		  cp[3] == L'5' &&
-		  cp[4] == L'0' &&
-		  cp[5] == L'0' &&
-		  cp[6] == L'1' &&
-		  cp[7] == L'\0') ||
-		((cp[0] == L'u' || cp[0] == L'U') &&
-		 (cp[1] == L't' || cp[1] == L'T') &&
-		 (cp[2] == L'f' || cp[2] == L'F') &&
-		 ((cp[3] == L'8' && cp[4] == L'\0') ||
-		  (cp[3] == L'-' && cp[4] == L'8' && cp[5] == L'\0')));
+		(cp[0] == '6' &&
+		 cp[1] == '5' &&
+		 cp[2] == '0' &&
+		 cp[3] == '0' &&
+		 cp[4] == '1' &&
+		 cp[5] == '\0') ||
+		((cp[0] == 'c' || cp[0] == 'C') &&
+		 (cp[1] == 'p' || cp[1] == 'P') &&
+		  cp[2] == '6' &&
+		  cp[3] == '5' &&
+		  cp[4] == '0' &&
+		  cp[5] == '0' &&
+		  cp[6] == '1' &&
+		  cp[7] == '\0') ||
+		((cp[0] == 'u' || cp[0] == 'U') &&
+		 (cp[1] == 't' || cp[1] == 'T') &&
+		 (cp[2] == 'f' || cp[2] == 'F') &&
+		 ((cp[3] == '8' && cp[4] == '\0') ||
+		  (cp[3] == '-' && cp[4] == '8' && cp[5] == '\0')));
 }
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
@@ -1040,43 +1037,11 @@ char *locale_helper_add_utf8_cp(const int cat, const char locale[])
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Check_return
 #endif
-static wchar_t is_ascii_char(const char c)
-{
-#define C(x) case x: return L ## x
-	MAP_CHAR(c, '\0')
-#undef C
-}
-
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Check_return
-#endif
 static char is_wascii_char(const wchar_t c)
 {
 #define C(x) case L ## x: return x
 	MAP_CHAR(c, L'\0')
 #undef C
-}
-
-#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Check_return
-A_Nonnull_all_args
-A_At(b, A_In_z)
-A_At(w, A_Pre_writable_size(mx) A_Post_z)
-A_Success(!return)
-#endif
-static int name_to_wide(wchar_t w[], const char b[], const unsigned mx)
-{
-	unsigned i = 0;
-	for (;; i++) {
-		if (i == mx)
-			return -2; /* Too small buffer.  */
-		w[i] = is_ascii_char(b[i]);
-		if (w[i] == L'\0') {
-			if (b[i] == '\0')
-				return 0;
-			return -1; /* Non-ASCII character.  */
-		}
-	}
 }
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
@@ -1105,139 +1070,133 @@ static int name_to_narrow(const wchar_t w[], char b[], const unsigned mx)
 A_Check_return
 A_Nonnull_all_args
 A_At(locale, A_In_z)
-A_At(wbuf, A_Pre_writable_size(wbuf_sz))
+A_At(buf, A_Pre_writable_size(buf_sz))
 A_Ret_z
 A_Success(return)
 #endif
-static char *set_locale_helper_(const int cat, const wchar_t locale[],
-	wchar_t wbuf[], const unsigned wbuf_sz)
+static char *set_locale_helper_(const int cat, const char locale[],
+	char buf[], const unsigned buf_sz)
 {
-	static char buf[LOCALE_BUF_SIZE];
-	unsigned base_len;
-	size_t cp_len = 0;
+	const char *loc = locale;
 	unsigned len = 0;
-	const wchar_t *wloc = locale;
-	const char *loc;
+	size_t cp_len = 0;
 	const struct lang_tag *info;
-	wchar_t *ret;
+	char *ret;
 
-	const wchar_t *const cp = wcschr(locale, L'.');
+	const char *const cp = strchr(locale, '.');
 	const int is_utf8 = cp && is_utf8_code_page(cp + 1);
 
 	if (is_utf8) {
 		/* Trim utf8 code page.  */
 		const size_t loc_len = (size_t)(cp - locale);
-		if (locale != wbuf) {
-			if (loc_len >= wbuf_sz)
+		if (locale != buf) {
+			if (loc_len >= buf_sz)
 				return NULL;
-			memcpy(wbuf, locale, loc_len*sizeof(*locale));
+			memcpy(buf, locale, loc_len*sizeof(*locale));
 		}
-		wbuf[loc_len] = L'\0';
-		wloc = wbuf;
+		buf[loc_len] = '\0';
+		loc = buf;
 	}
 
-	if ((ret = _wsetlocale(cat, wloc)) != NULL)
+	if ((ret = setlocale(cat, loc)) != NULL)
 		goto ok;
 
-	if (name_to_narrow(wloc, buf, sizeof(buf)))
-		return NULL;
-
-	info = find_tag(buf, &base_len);
+	info = find_tag(loc);
 	if (!info)
 		return NULL;
 
 	loc = info->lang_country;
 
-	if (!is_utf8 && buf[base_len]) {
+	if (!is_utf8 && cp) {
 		len = (unsigned)strlen(loc);
-		if (len >= sizeof(buf))
+		if (len >= buf_sz)
 			return NULL;
 
 		/* Append non-utf8 code page.
 		   Trim "cp" prefix of "cp1234".  */
 		{
-			const char *b = buf + base_len;
+			const char *b = cp;
 			if ((b[1] == 'c' || b[1] == 'C') &&
 				(b[2] == 'p' || b[2] == 'P') &&
 				('0' <= b[3] && b[3] <= '9'))
 			{
-				for (b += 4; *b; b++) {
+				for (b += 4;; b++) {
 					if (*b < '0' || '9' < *b)
 						break;
 				}
 			}
+
+			cp_len = (size_t)(b - cp);
 			if (!*b) {
-				base_len += 2;
-				buf[base_len] = '.';
-				cp_len = (size_t)(b - buf) - base_len;
+				cp_len -= 2; /* "cp" */
+				b = cp + 2; /* "cp" */
 			}
-			else
-				cp_len = (size_t)(b - buf) + strlen(b);
+			else {
+				cp_len += strlen(b);
+				b = cp;
+			}
+
+			if (cp_len >= buf_sz - len)
+				return NULL;
+
+			memmove(buf + len + 1/*'.'*/, b + 1/*'.'*/, cp_len/*with '\0'*/);
+			memcpy(buf, loc, len);
+			buf[len] = '.';
 		}
 
-		if (cp_len >= sizeof(buf) - len)
-			return NULL;
-		if (len != base_len)
-			memmove(buf + len, buf + base_len, cp_len + 1);
-		memcpy(buf, loc, len);
 		loc = buf;
 	}
 
-	if (name_to_wide(wbuf, loc, wbuf_sz))
-		return NULL;
-
-	if ((ret = _wsetlocale(cat, wbuf)) != NULL)
+	if ((ret = setlocale(cat, loc)) != NULL)
 		goto ok;
 
 	if (LOCALE_CUSTOM_UNSPECIFIED == info->id)
 		return NULL;
 
+	/* Get space in buf - move code page to the end of buf.  */
 	if (cp_len)
-		memmove(buf + sizeof(buf) - cp_len, buf + len, cp_len);
+		memmove(buf + buf_sz - cp_len, buf + len, cp_len);
 
-	len = lang_tag_to_locale_name(info, buf, sizeof(buf) - (unsigned)cp_len);
+	len = lang_tag_to_locale_name(info, buf, buf_sz - (unsigned)cp_len);
 	if (!len)
 		return NULL;
 
 	if (cp_len) {
 		/* Append non-utf8 code page.  */
-		memmove(buf + len, buf + sizeof(buf) - cp_len, cp_len);
+		memmove(buf + len, buf + buf_sz - cp_len, cp_len);
 		buf[len + cp_len] = '\0';
 	}
 
-	if (name_to_wide(wbuf, buf, wbuf_sz))
+	if ((ret = setlocale(cat, buf)) == NULL)
 		return NULL;
 
-	if ((ret = _wsetlocale(cat, wbuf)) == NULL)
-		return NULL;
 ok:
-	if (name_to_narrow(ret, buf, sizeof(buf)))
-		return NULL;
-
 	/* Replace standard locale codepage-dependent CRT Api with utf8-wrappers:
 	   - if any LC_... category specifies a code set or
 	   - locale category is LC_CTYPE (no code set - set system default) or
 	   - locale category is LC_ALL - it affects LC_CTYPE.  */
 	if (cp || LC_CTYPE == cat || LC_ALL == cat)
-		change_localerpl(is_utf8);
+		localerpl_change(is_utf8);
 
-	return localerpl_is_utf8() ? locale_helper_add_utf8_cp(cat, buf) : buf;
+	return localerpl_is_utf8() ? locale_helper_add_utf8_cp(cat, ret) : ret;
 }
 
 A_Use_decl_annotations
 char *set_locale_helper(const int cat, const char locale[])
 {
-	wchar_t wbuf[LOCALE_BUF_SIZE];
-	if (name_to_wide(wbuf, locale, sizeof(wbuf)/sizeof(wbuf[0])))
-		return NULL;
-	return set_locale_helper_(cat, wbuf, wbuf, sizeof(wbuf)/sizeof(wbuf[0]));
+	char buf[LOCALE_BUF_SIZE];
+	char *curr = set_locale_helper_(cat, locale, buf, sizeof(buf)/sizeof(buf[0]));
+	return curr;
 }
 
 A_Use_decl_annotations
 int wset_locale_helper(const int cat, const wchar_t locale[])
 {
-	wchar_t wbuf[LOCALE_BUF_SIZE];
-	char *const curr = set_locale_helper_(cat, locale, wbuf, sizeof(wbuf)/sizeof(wbuf[0]));
+	char *curr;
+	char buf[LOCALE_BUF_SIZE];
+	if (name_to_narrow(locale, buf, sizeof(buf)/sizeof(buf[0])))
+		return -1;
+	curr = set_locale_helper_(cat, buf, buf, sizeof(buf)/sizeof(buf[0]));
 	return curr ? 0 : -1;
 }
 
