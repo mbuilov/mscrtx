@@ -10,11 +10,15 @@
 /* console_setup.h */
 
 /* Check if given 'fd' is a file descriptor of console device.
-  If it is, change file mode to _O_U16TEXT, so fwprintf() functions will work
-   correctly.
-  Returns previous file descriptor mode, which may be used to restore file
-   mode by calling _setmode().
+  If it is, change file mode to _O_BINARY, to disable internal text encoding
+   conversion (from locale code page to console code page) in write()/fwrite()
+   functions.
+  Returns previous file descriptor mode (likely _O_TEXT), which must be used to
+   restore file mode by calling turn_off_console_fd(fd, old_mode).
   Returns -1 if 'fd' is not a console descriptor (file mode wasn't changed) */
-int console_set_wide(int fd);
+int turn_on_console_fd(int fd);
+
+/* Restore file descriptor mode changed by previous call to turn_on_console_fd() */
+#define turn_off_console_fd(fd, old_mode) _setmode(fd, old_mode)
 
 #endif /* CONSOLE_SETUP_H_INCLUDED */
