@@ -65,7 +65,7 @@ wchar_t *xpathwc_alloc(const char path[], wchar_t buf[],
 		}
 		buf = (wchar_t*)(*alloc)(sizeof(*buf)*(n + 1));
 		if (buf)
-			(void)mbstowcs(buf, path, n + 1);
+			(void)!mbstowcs(buf, path, n + 1);
 		return buf;
 	}
 }
@@ -414,17 +414,17 @@ int xfstat(void *h, const wchar_t wp[]/*NULL?*/, struct xstat *const buf)
 }
 
 A_Use_decl_annotations
-int xwstat(const wchar_t wp[], struct xstat *const buf, const int dont_follow)
+int xwstat(const wchar_t path[], struct xstat *buf, int dont_follow)
 {
-	const HANDLE h = xstat_open(wp, dont_follow);
+	const HANDLE h = xstat_open(path, dont_follow);
 	if (INVALID_HANDLE_VALUE != h) {
-		const int r = xfstat(h, wp, buf);
+		const int r = xfstat(h, path, buf);
 		CloseHandle(h);
 		return r;
 	}
 	{
 		const DWORD open_err = GetLastError();
-		const int r = xstat_root(wp, buf);
+		const int r = xstat_root(path, buf);
 		if (r && errno == ENOENT) {
 			if (ERROR_ACCESS_DENIED == open_err)
 				errno = EACCES;
@@ -452,13 +452,13 @@ static int xstat_internal(const char path[], struct xstat *const buf, const int 
 }
 
 A_Use_decl_annotations
-int xstat(const char path[], struct xstat *const buf)
+int xstat(const char path[], struct xstat *buf)
 {
 	return xstat_internal(path, buf, /*folow:*/0);
 }
 
 A_Use_decl_annotations
-int xlstat(const char path[], struct xstat *const buf)
+int xlstat(const char path[], struct xstat *buf)
 {
 	return xstat_internal(path, buf, /*folow:*/1);
 }
