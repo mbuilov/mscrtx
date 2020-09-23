@@ -22,17 +22,17 @@ Building.
 You need any c99 compiler,
 
 for example MinGW gcc:
-gcc -g -O2 -I. -c -Wall -Wextra .\src\arg_parser.c
-gcc -g -O2 -I. -c -Wall -Wextra .\src\socket_fd.c
-gcc -g -O2 -I. -c -Wall -Wextra .\src\socket_file.c
-gcc -g -O2 -I. -c -Wall -Wextra .\src\wreaddir.c
-gcc -g -O2 -I. -c -Wall -Wextra .\src\wreadlink.c
-gcc -g -O2 -I. -c -Wall -Wextra .\src\xstat.c
-gcc -g -O2 -I. -c -Wall -Wextra .\src\locale_helpers.c
-gcc -g -O2 -I. -c -Wall -Wextra .\src\localerpl.c
-gcc -g -O2 -I. -c -Wall -Wextra -I..\libutf16 .\src\utf16cvt.c
-gcc -g -O2 -I. -c -Wall -Wextra -I..\libutf16 -I..\unicode_ctype .\src\utf8env.c
-gcc -g -O2 -I. -c -Wall -Wextra -I..\libutf16 -I..\unicode_ctype .\src\utf8rpl.c
+gcc -g -O2 -D_POSIX_C_SOURCE -I. -c -Wall -Wextra .\src\arg_parser.c
+gcc -g -O2 -D_POSIX_C_SOURCE -I. -c -Wall -Wextra .\src\socket_fd.c
+gcc -g -O2 -D_POSIX_C_SOURCE -I. -c -Wall -Wextra .\src\socket_file.c
+gcc -g -O2 -D_POSIX_C_SOURCE -I. -c -Wall -Wextra .\src\wreaddir.c
+gcc -g -O2 -D_POSIX_C_SOURCE -I. -c -Wall -Wextra .\src\wreadlink.c
+gcc -g -O2 -D_POSIX_C_SOURCE -I. -c -Wall -Wextra .\src\xstat.c
+gcc -g -O2 -D_POSIX_C_SOURCE -I. -c -Wall -Wextra .\src\locale_helpers.c
+gcc -g -O2 -D_POSIX_C_SOURCE -I. -c -Wall -Wextra -I..\libutf16 .\src\utf16cvt.c
+gcc -g -O2 -D_POSIX_C_SOURCE -I. -c -Wall -Wextra -I..\libutf16 .\src\consoleio.c
+gcc -g -O2 -D_POSIX_C_SOURCE -I. -c -Wall -Wextra -I..\libutf16 -I..\unicode_ctype .\src\utf8env.c
+gcc -g -O2 -D_POSIX_C_SOURCE -I. -c -Wall -Wextra -I..\libutf16 -I..\unicode_ctype .\src\localerpl.c
 ar -crs mscrtx.a      ^
   .\arg_parser.o      ^
   .\socket_fd.o       ^
@@ -41,10 +41,10 @@ ar -crs mscrtx.a      ^
   .\wreadlink.o       ^
   .\xstat.o           ^
   .\locale_helpers.o  ^
-  .\localerpl.o       ^
   .\utf16cvt.o        ^
+  .\consoleio.o       ^
   .\utf8env.o         ^
-  .\utf8rpl.o
+  .\localerpl.o
 
 or MSVC:
 cl /wd4711 /wd4820 /wd5045 /D_CRT_SECURE_NO_WARNINGS /O2 /I. /c /Wall .\src\arg_parser.c
@@ -54,10 +54,10 @@ cl /wd4711 /wd4820 /wd5045 /D_CRT_SECURE_NO_WARNINGS /O2 /I. /c /Wall .\src\wrea
 cl /wd4711 /wd4820 /wd5045 /D_CRT_SECURE_NO_WARNINGS /O2 /I. /c /Wall .\src\wreadlink.c
 cl /wd4711 /wd4820 /wd5045 /D_CRT_SECURE_NO_WARNINGS /O2 /I. /c /Wall .\src\xstat.c
 cl /wd4711 /wd4820 /wd5045 /D_CRT_SECURE_NO_WARNINGS /O2 /I. /c /Wall .\src\locale_helpers.c
-cl /wd4711 /wd4820 /wd5045 /D_CRT_SECURE_NO_WARNINGS /O2 /I. /c /Wall .\src\localerpl.c
 cl /wd4711 /wd4820 /wd5045 /D_CRT_SECURE_NO_WARNINGS /O2 /I. /c /Wall -I..\libutf16 .\src\utf16cvt.c
+cl /wd4711 /wd4820 /wd5045 /D_CRT_SECURE_NO_WARNINGS /O2 /I. /c /Wall -I..\libutf16 .\src\consoleio.c
 cl /wd4711 /wd4820 /wd5045 /D_CRT_SECURE_NO_WARNINGS /O2 /I. /c /Wall -I..\libutf16 -I..\unicode_ctype .\src\utf8env.c
-cl /wd4711 /wd4820 /wd5045 /D_CRT_SECURE_NO_WARNINGS /O2 /I. /c /Wall -I..\libutf16 -I..\unicode_ctype .\src\utf8rpl.c
+cl /wd4711 /wd4820 /wd5045 /D_CRT_SECURE_NO_WARNINGS /O2 /I. /c /Wall -I..\libutf16 -I..\unicode_ctype .\src\localerpl.c
 lib /out:mscrtx.a       ^
   .\arg_parser.obj      ^
   .\socket_fd.obj       ^
@@ -66,27 +66,27 @@ lib /out:mscrtx.a       ^
   .\wreadlink.obj       ^
   .\xstat.obj           ^
   .\locale_helpers.obj  ^
-  .\localerpl.obj       ^
   .\utf16cvt.obj        ^
+  .\consoleio.obj       ^
   .\utf8env.obj         ^
-  .\utf8rpl.obj
+  .\localerpl.obj
 
 
 
 Also, the library can be built with source annotations (restricted pointers, non-null attributes, etc.)
 
 MinGW gcc:
-gcc -g -O2 -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer .\src\arg_parser.c
-gcc -g -O2 -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer .\src\socket_fd.c
-gcc -g -O2 -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer .\src\socket_file.c
-gcc -g -O2 -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer .\src\wreaddir.c
-gcc -g -O2 -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer .\src\wreadlink.c
-gcc -g -O2 -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer .\src\xstat.c
-gcc -g -O2 -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer .\src\locale_helpers.c
-gcc -g -O2 -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer .\src\localerpl.c
-gcc -g -O2 -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer -I..\libutf16 .\src\utf16cvt.c
-gcc -g -O2 -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer -I..\libutf16 -I..\unicode_ctype .\src\utf8env.c
-gcc -g -O2 -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer -I..\libutf16 -I..\unicode_ctype .\src\utf8rpl.c
+gcc -g -O2 -D_POSIX_C_SOURCE -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer .\src\arg_parser.c
+gcc -g -O2 -D_POSIX_C_SOURCE -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer .\src\socket_fd.c
+gcc -g -O2 -D_POSIX_C_SOURCE -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer .\src\socket_file.c
+gcc -g -O2 -D_POSIX_C_SOURCE -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer .\src\wreaddir.c
+gcc -g -O2 -D_POSIX_C_SOURCE -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer .\src\wreadlink.c
+gcc -g -O2 -D_POSIX_C_SOURCE -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer .\src\xstat.c
+gcc -g -O2 -D_POSIX_C_SOURCE -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer .\src\locale_helpers.c
+gcc -g -O2 -D_POSIX_C_SOURCE -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer -I..\libutf16 .\src\utf16cvt.c
+gcc -g -O2 -D_POSIX_C_SOURCE -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer -I..\libutf16 .\src\consoleio.c
+gcc -g -O2 -D_POSIX_C_SOURCE -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer -I..\libutf16 -I..\unicode_ctype .\src\utf8env.c
+gcc -g -O2 -D_POSIX_C_SOURCE -include ../cmn_headers/sal_defs.h -I. -c -Wall -Wextra -fanalyzer -I..\libutf16 -I..\unicode_ctype .\src\localerpl.c
 ar -crs mscrtx.a      ^
   .\arg_parser.o      ^
   .\socket_fd.o       ^
@@ -95,10 +95,10 @@ ar -crs mscrtx.a      ^
   .\wreadlink.o       ^
   .\xstat.o           ^
   .\locale_helpers.o  ^
-  .\localerpl.o       ^
   .\utf16cvt.o        ^
+  .\consoleio.o       ^
   .\utf8env.o         ^
-  .\utf8rpl.o
+  .\localerpl.o
 
 MSVC:
 cl /wd4464 /wd4711 /wd4820 /wd5045 /analyze /D_CRT_SECURE_NO_WARNINGS /O2 /FI..\cmn_headers\sal_defs.h /I. /c /Wall .\src\arg_parser.c
@@ -108,10 +108,10 @@ cl /wd4464 /wd4711 /wd4820 /wd5045 /analyze /D_CRT_SECURE_NO_WARNINGS /O2 /FI..\
 cl /wd4464 /wd4711 /wd4820 /wd5045 /analyze /D_CRT_SECURE_NO_WARNINGS /O2 /FI..\cmn_headers\sal_defs.h /I. /c /Wall .\src\wreadlink.c
 cl /wd4464 /wd4711 /wd4820 /wd5045 /analyze /D_CRT_SECURE_NO_WARNINGS /O2 /FI..\cmn_headers\sal_defs.h /I. /c /Wall .\src\xstat.c
 cl /wd4464 /wd4711 /wd4820 /wd5045 /analyze /D_CRT_SECURE_NO_WARNINGS /O2 /FI..\cmn_headers\sal_defs.h /I. /c /Wall .\src\locale_helpers.c
-cl /wd4464 /wd4711 /wd4820 /wd5045 /analyze /D_CRT_SECURE_NO_WARNINGS /O2 /FI..\cmn_headers\sal_defs.h /I. /c /Wall .\src\localerpl.c
 cl /wd4464 /wd4711 /wd4820 /wd5045 /analyze /D_CRT_SECURE_NO_WARNINGS /O2 /FI..\cmn_headers\sal_defs.h /I. /c /Wall -I..\libutf16 .\src\utf16cvt.c
+cl /wd4464 /wd4711 /wd4820 /wd5045 /analyze /D_CRT_SECURE_NO_WARNINGS /O2 /FI..\cmn_headers\sal_defs.h /I. /c /Wall -I..\libutf16 .\src\consoleio.c
 cl /wd4464 /wd4711 /wd4820 /wd5045 /analyze /D_CRT_SECURE_NO_WARNINGS /O2 /FI..\cmn_headers\sal_defs.h /I. /c /Wall -I..\libutf16 -I..\unicode_ctype .\src\utf8env.c
-cl /wd4464 /wd4711 /wd4820 /wd5045 /analyze /D_CRT_SECURE_NO_WARNINGS /O2 /FI..\cmn_headers\sal_defs.h /I. /c /Wall -I..\libutf16 -I..\unicode_ctype .\src\utf8rpl.c
+cl /wd4464 /wd4711 /wd4820 /wd5045 /analyze /D_CRT_SECURE_NO_WARNINGS /O2 /FI..\cmn_headers\sal_defs.h /I. /c /Wall -I..\libutf16 -I..\unicode_ctype .\src\localerpl.c
 lib /out:mscrtx.a       ^
   .\arg_parser.obj      ^
   .\socket_fd.obj       ^
@@ -120,7 +120,7 @@ lib /out:mscrtx.a       ^
   .\wreadlink.obj       ^
   .\xstat.obj           ^
   .\locale_helpers.obj  ^
-  .\localerpl.obj       ^
   .\utf16cvt.obj        ^
+  .\consoleio.obj       ^
   .\utf8env.obj         ^
-  .\utf8rpl.obj
+  .\localerpl.obj
