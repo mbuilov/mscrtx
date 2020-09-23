@@ -418,7 +418,7 @@ PRAGMA_WARNING_POP
 					char *const a = (char*)malloc(need + 1);
 					if (a) {
 						*p = a;
-						(void)wcstombs(a, list->value, need + 1);
+						(void)!wcstombs(a, list->value, need + 1);
 						continue;
 					}
 					if (err) {
@@ -474,7 +474,7 @@ PRAGMA_WARNING_POP
 					wchar_t *const w = (wchar_t*)malloc(sizeof(wchar_t)*(need + 1));
 					if (w) {
 						*p = w;
-						(void)mbstowcs(w, *a, need + 1);
+						(void)!mbstowcs(w, *a, need + 1);
 						continue;
 					}
 					if (err) {
