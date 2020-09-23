@@ -11,6 +11,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h> /* for winnls.h GetLocaleInfoA */
 
+#define LOCALE_RPL_IMPL
 #include "mscrtx/localerpl.h" /* for localerpl_is_utf8 */
 #include "mscrtx/locale_helpers.h"
 
