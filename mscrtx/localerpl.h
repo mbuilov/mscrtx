@@ -28,7 +28,7 @@
 #include <process.h>
 #include <time.h>
 
-/* for ATTRIBUTE_PRINTF_PTR */
+/* for ATTRIBUTE_PRINTF */
 #include "mscrtx/attributes.h"
 
 /* in UTF-8 locale MB_CUR_MAX == 4 */
@@ -43,126 +43,8 @@ struct tm;
 struct __stat64;
 typedef unsigned short c32ctype_t;
 
-struct localerpl {
-	int (*rpl_open)(const char *name, int flags, ...);
-	FILE *(*rpl_fopen)(const char *path, const char *mode);
-
-	int (*rpl_read)(int fd, void *buf, unsigned count);
-	int (*rpl_write)(int fd, const void *buf, unsigned count);
-	size_t (*rpl_fread)(void *buf, size_t size, size_t nmemb, FILE *stream);
-	size_t (*rpl_fwrite)(const void *buf, size_t size, size_t nmemb, FILE *stream);
-
-	int (*rpl_putchar)(int c);
-	int (*rpl_fputc)(int c, FILE *stream);
-	int (*rpl_getchar)(void);
-	int (*rpl_fgetc)(FILE *stream);
-	int (*rpl_puts)(const char *s);
-	int (*rpl_fputs)(const char *s, FILE *stream);
-
-	char *(*rpl_fgets)(char *s, int size, FILE *stream);
-
-	int (*rpl_mkdir)(const char *dirname);
-	int (*rpl_rmdir)(const char *dirname);
-	int (*rpl_remove)(const char *pathname);
-	int (*rpl_unlink)(const char *pathname);
-	int (*rpl_rename)(const char *old_name, const char *new_name);
-	int (*rpl_chdir)(const char *path);
-
-	int (*rpl_stat)(const char *path, struct __stat64 *buf);
-	int (*rpl_chmod)(const char *path, int mode);
-
-	ATTRIBUTE_PRINTF_PTR(format, 1, 2)
-	int (*rpl_printf)(const char *format, ...);
-
-	ATTRIBUTE_PRINTF_PTR(format, 2, 3)
-	int (*rpl_fprintf)(FILE *stream, const char *format, ...);
-
-	ATTRIBUTE_PRINTF_PTR(format, 1, 0)
-	int (*rpl_vprintf)(const char *format, va_list ap);
-
-	ATTRIBUTE_PRINTF_PTR(format, 2, 0)
-	int (*rpl_vfprintf)(FILE *stream, const char *format, va_list ap);
-
-	char *(*rpl_strerror)(int error_number);
-
-	ATTRIBUTE_PRINTF_PTR(format, 3, 0)
-	size_t (*rpl_strftime)(char *s, size_t mx, const char *fmt, const struct tm *t);
-
-	int (*rpl_mkstemp)(char *templ);
-
-	char **(*rpl_environ)(void);
-	char *(*rpl_getenv)(const char *name);
-	int (*rpl_setenv)(const char *name, const char *value, int overwrite);
-	int (*rpl_unsetenv)(const char *name);
-	int (*rpl_clearenv)(void);
-
-	char *(*rpl_setlocale)(int category, const char *locale);
-
-	int (*rpl_mb_cur_max)(void);
-
-	wint_t (*rpl_btowc)(int c);
-
-	int (*rpl_mblen)(const char *s, size_t n);
-	size_t (*rpl_mbrlen)(const char *s, size_t n, mbstate_t *ps);
-
-	size_t (*rpl_mbrtoc16)(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps);
-	size_t (*rpl_mbrtoc32)(unsigned *pwi, const char *s, size_t n, mbstate_t *ps);
-	size_t (*rpl_c16rtomb)(char *s, wchar_t wc, mbstate_t *ps);
-	size_t (*rpl_c32rtomb)(char *s, unsigned wi, mbstate_t *ps);
-
-	size_t (*rpl_mbstowcs)(wchar_t *wcstr, const char *mbstr, size_t count);
-	size_t (*rpl_wcstombs)(char *mbstr, const wchar_t *wcstr, size_t count);
-
-	int (*rpl_strcoll)(const char *s1, const char *s2);
-	int (*rpl_stricmp)(const char *s1, const char *s2);
-	int (*rpl_tolower)(int c);
-	int (*rpl_toupper)(int c);
-	int (*rpl_isascii)(int c);
-	int (*rpl_isalnum)(int c);
-	int (*rpl_isalpha)(int c);
-	int (*rpl_isblank)(int c);
-	int (*rpl_iscntrl)(int c);
-	int (*rpl_isdigit)(int c);
-	int (*rpl_isgraph)(int c);
-	int (*rpl_islower)(int c);
-	int (*rpl_isprint)(int c);
-	int (*rpl_ispunct)(int c);
-	int (*rpl_isspace)(int c);
-	int (*rpl_isupper)(int c);
-	int (*rpl_isxdigit)(int c);
-
-	int (*rpl_c32scoll)(const unsigned *s1, const unsigned *s2);
-	int (*rpl_c32sicmp)(const unsigned *s1, const unsigned *s2);
-	unsigned (*rpl_c32tolower)(unsigned c);
-	unsigned (*rpl_c32toupper)(unsigned c);
-	int (*rpl_c32isascii)(unsigned c);
-	int (*rpl_c32isalnum)(unsigned c);
-	int (*rpl_c32isalpha)(unsigned c);
-	int (*rpl_c32isblank)(unsigned c);
-	int (*rpl_c32iscntrl)(unsigned c);
-	int (*rpl_c32isdigit)(unsigned c);
-	int (*rpl_c32isgraph)(unsigned c);
-	int (*rpl_c32islower)(unsigned c);
-	int (*rpl_c32isprint)(unsigned c);
-	int (*rpl_c32ispunct)(unsigned c);
-	int (*rpl_c32isspace)(unsigned c);
-	int (*rpl_c32isupper)(unsigned c);
-	int (*rpl_c32isxdigit)(unsigned c);
-	c32ctype_t (*rpl_c32ctype)(const char *name);
-	int (*rpl_c32isctype)(unsigned c, c32ctype_t desc);
-
-	size_t (*rpl_mbstoc32s)(unsigned *dst, const char *src, size_t n);
-	size_t (*rpl_c32stombs)(char *dst, const unsigned *src, size_t n);
-	size_t (*rpl_wcstoc32s)(unsigned *dst, const wchar_t *src, size_t n);
-	size_t (*rpl_c32stowcs)(wchar_t *dst, const unsigned *src, size_t n);
-
-	intptr_t (*rpl_spawnvp)(int mode, const char *cmdname, const char *const *argv);
-	intptr_t (*rpl_spawnl)(int mode, const char *cmdname, const char *arg0, ...);
-	FILE *(*rpl_popen)(const char *command, const char *mode);
-};
-
-/* Change localerpl global pointer.  */
-void change_localerpl(int to_utf8);
+/* Change behaviour of localerpl wrappers.  */
+void localerpl_change(int to_utf8);
 
 /* Returns non-zero if using UTF-8 replacements.  */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
@@ -170,19 +52,30 @@ A_Check_return
 #endif
 int localerpl_is_utf8(void);
 
+/* Returns locale code page number (based on the value of LC_CTYPE).
+  For example, for UTF-8 locale, code page number is 65001.  */
+/* Returns 0 if using "C" locale.  */
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+unsigned get_locale_code_page(void);
+
 /* wcslen(3) */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
 A_Check_return
 A_Nonnull_all_args
 A_At(str, A_In_z)
 #endif
+size_t localerpl_c32slen(const unsigned *str);
+
 #ifndef localerpl_do_not_redefine_c32slen
-#ifdef c32slen
-#undef c32slen
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32slen
+#   undef c32slen
+#  endif
+#  define c32slen localerpl_c32slen
+# endif
 #endif
-#define c32slen localerpl_rpl_c32slen
-#endif
-size_t localerpl_rpl_c32slen(const unsigned *str);
 
 /* wcschr(3) */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
@@ -191,13 +84,16 @@ A_Nonnull_all_args
 A_At(s, A_In_z)
 A_Ret_maybenull
 #endif
+unsigned *localerpl_c32schr(const unsigned *s, unsigned c);
+
 #ifndef localerpl_do_not_redefine_c32schr
-#ifdef c32schr
-#undef c32schr
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32schr
+#   undef c32schr
+#  endif
+#  define c32schr localerpl_c32schr
+# endif
 #endif
-#define c32schr localerpl_rpl_c32schr
-#endif
-unsigned *localerpl_rpl_c32schr(const unsigned *s, unsigned c);
 
 /* wcsrchr(3) */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
@@ -206,13 +102,16 @@ A_Nonnull_all_args
 A_At(s, A_In_z)
 A_Ret_maybenull
 #endif
+unsigned *localerpl_c32srchr(const unsigned *s, unsigned c);
+
 #ifndef localerpl_do_not_redefine_c32srchr
-#ifdef c32srchr
-#undef c32srchr
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32srchr
+#   undef c32srchr
+#  endif
+#  define c32srchr localerpl_c32srchr
+# endif
 #endif
-#define c32srchr localerpl_rpl_c32srchr
-#endif
-unsigned *localerpl_rpl_c32srchr(const unsigned *s, unsigned c);
 
 /* strchrnul(3) */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
@@ -222,13 +121,16 @@ A_At(s, A_In_z)
 A_Ret_never_null
 A_Ret_z
 #endif
+unsigned *localerpl_c32schrnul(const unsigned *s, unsigned c);
+
 #ifndef localerpl_do_not_redefine_c32schrnul
-#ifdef c32schrnul
-#undef c32schrnul
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32schrnul
+#   undef c32schrnul
+#  endif
+#  define c32schrnul localerpl_c32schrnul
+# endif
 #endif
-#define c32schrnul localerpl_rpl_c32schrnul
-#endif
-unsigned *localerpl_rpl_c32schrnul(const unsigned *s, unsigned c);
 
 /* strcmp(3) */
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
@@ -237,16 +139,1468 @@ A_Nonnull_all_args
 A_At(s1, A_In_z)
 A_At(s2, A_In_z)
 #endif
-#ifndef localerpl_do_not_redefine_c32scmp
-#ifdef c32scmp
-#undef c32scmp
-#endif
-#define c32scmp localerpl_rpl_c32scmp
-#endif
-int localerpl_rpl_c32scmp(const unsigned *s1, const unsigned *s2);
+int localerpl_c32scmp(const unsigned *s1, const unsigned *s2);
 
-/* Global pointer.  */
-extern const struct localerpl *localerpl;
+#ifndef localerpl_do_not_redefine_c32scmp
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32scmp
+#   undef c32scmp
+#  endif
+#  define c32scmp localerpl_c32scmp
+# endif
+#endif
+
+/* note: wide-character string formats, e.g. "%ls"/"%lc"/"%ws"/"%S", are not supported */
+ATTRIBUTE_PRINTF(format, 1, 2)
+int localerpl_printf(const char *format, ...);
+
+#if !defined(_MSC_VER) || !defined(_PREFAST_)
+#ifndef localerpl_do_not_redefine_printf
+# ifndef LOCALE_RPL_IMPL
+#  ifdef printf
+#   undef printf
+#  endif
+#  define printf localerpl_printf
+# endif
+#endif
+#endif
+
+/* note: wide-character string formats, e.g. "%ls"/"%lc"/"%ws"/"%S", are not supported */
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Nonnull_arg(1)
+#endif
+ATTRIBUTE_PRINTF(format, 2, 3)
+int localerpl_fprintf(FILE *stream, const char *format, ...);
+
+#if !defined(_MSC_VER) || !defined(_PREFAST_)
+#ifndef localerpl_do_not_redefine_fprintf
+# ifndef LOCALE_RPL_IMPL
+#  ifdef fprintf
+#   undef fprintf
+#  endif
+#  define fprintf localerpl_fprintf
+# endif
+#endif
+#endif
+
+/* note: wide-character string formats, e.g. "%ls"/"%lc"/"%ws"/"%S", are not supported */
+ATTRIBUTE_PRINTF(format, 1, 0)
+int localerpl_vprintf(const char *format, va_list ap);
+
+#ifndef localerpl_do_not_redefine_vprintf
+# ifndef LOCALE_RPL_IMPL
+#  ifdef vprintf
+#   undef vprintf
+#  endif
+#  define vprintf localerpl_vprintf
+# endif
+#endif
+
+/* note: wide-character string formats, e.g. "%ls"/"%lc"/"%ws"/"%S", are not supported */
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Nonnull_arg(1)
+#endif
+ATTRIBUTE_PRINTF(format, 2, 0)
+int localerpl_vfprintf(FILE *stream, const char *format, va_list ap);
+
+#ifndef localerpl_do_not_redefine_vfprintf
+# ifndef LOCALE_RPL_IMPL
+#  ifdef vfprintf
+#   undef vfprintf
+#  endif
+#  define vfprintf localerpl_vfprintf
+# endif
+#endif
+
+/* note: multibyte-character string formats, e.g. "%s"/"%c"/"%hs"/"%S", are not supported */
+ATTRIBUTE_WPRINTF(format, 1, 2)
+int localerpl_wprintfmb(const wchar_t *format, ...);
+
+#ifndef localerpl_do_not_redefine_wprintfmb
+# ifndef LOCALE_RPL_IMPL
+#  ifdef wprintfmb
+#   undef wprintfmb
+#  endif
+#  define wprintfmb localerpl_wprintfmb
+# endif
+#endif
+
+/* note: multibyte-character string formats, e.g. "%s"/"%c"/"%hs"/"%S", are not supported */
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Nonnull_arg(1)
+#endif
+ATTRIBUTE_WPRINTF(format, 2, 3)
+int localerpl_fwprintfmb(FILE *stream, const wchar_t *format, ...);
+
+#ifndef localerpl_do_not_redefine_fwprintfmb
+# ifndef LOCALE_RPL_IMPL
+#  ifdef fwprintfmb
+#   undef fwprintfmb
+#  endif
+#  define fwprintfmb localerpl_fwprintfmb
+# endif
+#endif
+
+/* note: multibyte-character string formats, e.g. "%s"/"%c"/"%hs"/"%S", are not supported */
+ATTRIBUTE_WPRINTF(format, 1, 0)
+int localerpl_vwprintfmb(const wchar_t *format, va_list ap);
+
+#ifndef localerpl_do_not_redefine_vwprintfmb
+# ifndef LOCALE_RPL_IMPL
+#  ifdef vwprintfmb
+#   undef vwprintfmb
+#  endif
+#  define vwprintfmb localerpl_vwprintfmb
+# endif
+#endif
+
+/* note: multibyte-character string formats, e.g. "%s"/"%c"/"%hs"/"%S", are not supported */
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Nonnull_arg(1)
+#endif
+ATTRIBUTE_WPRINTF(format, 2, 0)
+int localerpl_vfwprintfmb(FILE *stream, const wchar_t *format, va_list ap);
+
+#ifndef localerpl_do_not_redefine_vfwprintfmb
+# ifndef LOCALE_RPL_IMPL
+#  ifdef vfwprintfmb
+#   undef vfwprintfmb
+#  endif
+#  define vfwprintfmb localerpl_vfwprintfmb
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(name, A_In_z)
+A_Success(return >= 0)
+#endif
+int localerpl_open(const char *name, int flags, ...);
+
+#ifndef localerpl_do_not_redefine_open
+# ifndef LOCALE_RPL_IMPL
+#  ifdef open
+#   undef open
+#  endif
+#  define open localerpl_open
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(path, A_In_z)
+A_At(mode, A_In_z)
+A_Success(return)
+#endif
+FILE *localerpl_fopen(const char *path, const char *mode);
+
+#ifndef localerpl_do_not_redefine_fopen
+# ifndef LOCALE_RPL_IMPL
+#  ifdef fopen
+#   undef fopen
+#  endif
+#  define fopen localerpl_fopen
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(fd, A_In_range(>=,0))
+A_When(count, A_At(buf, A_Notnull))
+A_When(count, A_At(buf, A_Pre_writable_byte_size(count)))
+A_When(count, A_At(buf, A_Post_readable_byte_size(return)))
+A_At(count, A_In_range(<=,INT_MAX))
+A_Success(return >= 0)
+#endif
+int localerpl_read(int fd, void *buf, unsigned count);
+
+#ifndef localerpl_do_not_redefine_read
+# ifndef LOCALE_RPL_IMPL
+#  ifdef read
+#   undef read
+#  endif
+#  define read localerpl_read
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(fd, A_In_range(>=,0))
+A_When(count, A_At(buf, A_In_reads_bytes(count)))
+A_At(count, A_In_range(<=,INT_MAX))
+A_Success(return == (int)count)
+#endif
+int localerpl_write(int fd, const void *buf, unsigned count);
+
+#ifndef localerpl_do_not_redefine_write
+# ifndef LOCALE_RPL_IMPL
+#  ifdef write
+#   undef write
+#  endif
+#  define write localerpl_write
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_arg(4)
+A_At(stream, A_In)
+A_When(size && nmemb, A_At(buf, A_Notnull))
+A_When(size && nmemb, A_At(buf, A_Pre_writable_byte_size(size*nmemb)))
+A_When(size && nmemb, A_At(buf, A_Post_readable_byte_size(size*return)))
+#endif
+size_t localerpl_fread(void *buf, size_t size, size_t nmemb, FILE *stream);
+
+#ifndef localerpl_do_not_redefine_fread
+# ifndef LOCALE_RPL_IMPL
+#  ifdef fread
+#   undef fread
+#  endif
+#  define fread localerpl_fread
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_arg(4)
+A_At(stream, A_In)
+A_When(size && nmemb, A_At(buf, A_In_reads_bytes(size*nmemb)))
+A_Success(return == nmemb)
+#endif
+size_t localerpl_fwrite(const void *buf, size_t size, size_t nmemb, FILE *stream);
+
+#ifndef localerpl_do_not_redefine_fwrite
+# ifndef LOCALE_RPL_IMPL
+#  ifdef fwrite
+#   undef fwrite
+#  endif
+#  define fwrite localerpl_fwrite
+# endif
+#endif
+
+int localerpl_putchar(int c);
+
+#ifndef localerpl_do_not_redefine_putchar
+# ifndef LOCALE_RPL_IMPL
+#  ifdef putchar
+#   undef putchar
+#  endif
+#  define putchar localerpl_putchar
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Nonnull_all_args
+A_At(stream, A_In)
+#endif
+int localerpl_fputc(int c, FILE *stream);
+
+#ifndef localerpl_do_not_redefine_fputc
+# ifndef LOCALE_RPL_IMPL
+#  ifdef fputc
+#   undef fputc
+#  endif
+#  define fputc localerpl_fputc
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+int localerpl_getchar(void);
+
+#ifndef localerpl_do_not_redefine_getchar
+# ifndef LOCALE_RPL_IMPL
+#  ifdef getchar
+#   undef getchar
+#  endif
+#  define getchar localerpl_getchar
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(stream, A_In)
+#endif
+int localerpl_fgetc(FILE *stream);
+
+#ifndef localerpl_do_not_redefine_fgetc
+# ifndef LOCALE_RPL_IMPL
+#  ifdef fgetc
+#   undef fgetc
+#  endif
+#  define fgetc localerpl_fgetc
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Nonnull_all_args
+A_At(s, A_In_z)
+#endif
+int localerpl_puts(const char *s);
+
+#ifndef localerpl_do_not_redefine_puts
+# ifndef LOCALE_RPL_IMPL
+#  ifdef puts
+#   undef puts
+#  endif
+#  define puts localerpl_puts
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Nonnull_all_args
+A_At(s, A_In_z)
+A_At(stream, A_In)
+#endif
+int localerpl_fputs(const char *s, FILE *stream);
+
+#ifndef localerpl_do_not_redefine_fputs
+# ifndef LOCALE_RPL_IMPL
+#  ifdef fputs
+#   undef fputs
+#  endif
+#  define fputs localerpl_fputs
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(s, A_Notnull)
+A_At(s, A_Pre_writable_byte_size(size))
+A_At(s, A_Post_z)
+A_At(size, A_In_range(>,0))
+A_At(stream, A_In)
+A_Success(return)
+A_Ret_z
+A_Post_satisfies(return == s)
+#endif
+char *localerpl_fgets(char *s, int size, FILE *stream);
+
+#ifndef localerpl_do_not_redefine_fgets
+# ifndef LOCALE_RPL_IMPL
+#  ifdef fgets
+#   undef fgets
+#  endif
+#  define fgets localerpl_fgets
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(dirname, A_In_z)
+A_Success(!return)
+#endif
+int localerpl_mkdir(const char *dirname);
+
+#ifndef localerpl_do_not_redefine_mkdir
+# ifndef LOCALE_RPL_IMPL
+#  ifdef mkdir
+#   undef mkdir
+#  endif
+#  define mkdir localerpl_mkdir
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(dirname, A_In_z)
+A_Success(!return)
+#endif
+int localerpl_rmdir(const char *dirname);
+
+#ifndef localerpl_do_not_redefine_rmdir
+# ifndef LOCALE_RPL_IMPL
+#  ifdef rmdir
+#   undef rmdir
+#  endif
+#  define rmdir localerpl_rmdir
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(pathname, A_In_z)
+A_Success(!return)
+#endif
+int localerpl_remove(const char *pathname);
+
+#ifndef localerpl_do_not_redefine_remove
+# ifndef LOCALE_RPL_IMPL
+#  ifdef remove
+#   undef remove
+#  endif
+#  define remove localerpl_remove
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(pathname, A_In_z)
+A_Success(!return)
+#endif
+int localerpl_unlink(const char *pathname);
+
+#ifndef localerpl_do_not_redefine_unlink
+# ifndef LOCALE_RPL_IMPL
+#  ifdef unlink
+#   undef undef
+#  endif
+#  define unlink localerpl_unlink
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(old_name, A_In_z)
+A_At(new_name, A_In_z)
+A_Success(!return)
+#endif
+int localerpl_rename(const char *old_name, const char *new_name);
+
+#ifndef localerpl_do_not_redefine_rename
+# ifndef LOCALE_RPL_IMPL
+#  ifdef rename
+#   undef rename
+#  endif
+#  define rename localerpl_rename
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(path, A_In_z)
+A_Success(!return)
+#endif
+int localerpl_chdir(const char *path);
+
+#ifndef localerpl_do_not_redefine_chdir
+# ifndef LOCALE_RPL_IMPL
+#  ifdef chdir
+#   undef chdir
+#  endif
+#  define chdir localerpl_chdir
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(path, A_In_z)
+A_At(buf, A_Out)
+A_Success(!return)
+#endif
+int localerpl_stat(const char *path, struct __stat64 *buf);
+
+#ifndef localerpl_do_not_redefine_stat
+# ifndef LOCALE_RPL_IMPL
+#  ifdef stat
+#   undef stat
+#  endif
+#  define stat(name, buf) localerpl_stat(name, buf)
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(path, A_In_z)
+A_Success(!return)
+#endif
+int localerpl_chmod(const char *path, int mode);
+
+#ifndef localerpl_do_not_redefine_chmod
+# ifndef LOCALE_RPL_IMPL
+#  ifdef chmod
+#   undef chmod
+#  endif
+#  define chmod localerpl_chmod
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Ret_z
+#endif
+char *localerpl_strerror(int error_number);
+
+#ifndef localerpl_do_not_redefine_strerror
+# ifndef LOCALE_RPL_IMPL
+#  ifdef strerror
+#   undef strerror
+#  endif
+#  define strerror localerpl_strerror
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(s, A_Notnull)
+A_At(s, A_Pre_writable_byte_size(mx))
+A_At(s, A_Post_readable_byte_size(return + 1))
+A_At(s, A_Post_z)
+A_At(fmt, A_In_z)
+A_At(t, A_In)
+A_Success(return)
+A_Post_satisfies(return < mx)
+#endif
+size_t localerpl_strftime(char *s, size_t mx, const char *fmt, const struct tm *t);
+
+#ifndef localerpl_do_not_redefine_strftime
+# ifndef LOCALE_RPL_IMPL
+#  ifdef strftime
+#   undef strftime
+#  endif
+#  define strftime localerpl_strftime
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(templ, A_Inout_z)
+A_Success(return >= 0)
+#endif
+int localerpl_mkstemp(char *templ);
+
+#ifndef localerpl_do_not_redefine_mkstemp
+# ifndef LOCALE_RPL_IMPL
+#  ifdef mkstemp
+#   undef mkstemp
+#  endif
+#  define mkstemp localerpl_mkstemp
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+char **localerpl_environ(void);
+
+#ifndef localerpl_do_not_redefine_environ
+# ifndef LOCALE_RPL_IMPL
+#  ifdef environ
+#   undef environ
+#  endif
+#  define environ localerpl_environ()
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(name, A_In_z)
+A_Ret_z
+A_Success(return)
+#endif
+char *localerpl_getenv(const char *name);
+
+#ifndef localerpl_do_not_redefine_getenv
+# ifndef LOCALE_RPL_IMPL
+#  ifdef getenv
+#   undef getenv
+#  endif
+#  define getenv localerpl_getenv
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Nonnull_all_args
+A_At(name, A_In_z)
+A_At(value, A_In_z)
+#endif
+int localerpl_setenv(const char *name, const char *value, int overwrite);
+
+#ifndef localerpl_do_not_redefine_setenv
+# ifndef LOCALE_RPL_IMPL
+#  ifdef setenv
+#   undef setenv
+#  endif
+#  define setenv localerpl_setenv
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Nonnull_all_args
+A_At(name, A_In_z)
+#endif
+int localerpl_unsetenv(const char *name);
+
+#ifndef localerpl_do_not_redefine_unsetenv
+# ifndef LOCALE_RPL_IMPL
+#  ifdef unsetenv
+#   undef unsetenv
+#  endif
+#  define unsetenv localerpl_unsetenv
+# endif
+#endif
+
+int localerpl_clearenv(void);
+
+#ifndef localerpl_do_not_redefine_clearenv
+# ifndef LOCALE_RPL_IMPL
+#  ifdef clearenv
+#   undef clearenv
+#  endif
+#  define clearenv localerpl_clearenv
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_At(locale, A_In_opt_z)
+A_Ret_z
+A_Success(return)
+#endif
+char *localerpl_setlocale(int category, const char *locale/*NULL?*/);
+
+#ifndef localerpl_do_not_redefine_setlocale
+# ifndef LOCALE_RPL_IMPL
+#  ifdef setlocale
+#   undef setlocale
+#  endif
+#  define setlocale localerpl_setlocale
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+int localerpl_mb_cur_max(void);
+
+#ifndef localerpl_do_not_redefine_MB_CUR_MAX
+# ifndef LOCALE_RPL_IMPL
+#  ifdef MB_CUR_MAX
+#   undef MB_CUR_MAX
+#  endif
+#  define MB_CUR_MAX localerpl_mb_cur_max()
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+wint_t localerpl_btowc(int c);
+
+#ifndef localerpl_do_not_redefine_btowc
+# ifndef LOCALE_RPL_IMPL
+#  ifdef btowc
+#   undef btowc
+#  endif
+#  define btowc localerpl_btowc
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(s, A_In_reads_opt(n))
+A_Success(return != -1)
+#endif
+int localerpl_mblen(const char *s/*NULL?*/, size_t n);
+
+#ifndef localerpl_do_not_redefine_mblen
+# ifndef LOCALE_RPL_IMPL
+#  ifdef mblen
+#   undef mblen
+#  endif
+#  define mblen localerpl_mblen
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(s, A_In_reads_opt(n))
+A_At(ps, A_Inout_opt)
+A_Success(return != A_Size_t(-1))
+#endif
+size_t localerpl_mbrlen(const char *s/*NULL?*/, size_t n, mbstate_t *ps/*NULL?*/);
+
+#ifndef localerpl_do_not_redefine_mbrlen
+# ifndef LOCALE_RPL_IMPL
+#  ifdef mbrlen
+#   undef mbrlen
+#  endif
+#  define mbrlen localerpl_mbrlen
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_When(s, A_At(pwc, A_Out_opt))
+A_At(s, A_In_reads_opt(n))
+A_At(ps, A_Inout_opt)
+A_Success(return != A_Size_t(-1))
+#endif
+size_t localerpl_mbrtoc16(wchar_t *pwc/*NULL?*/,
+	const char *s/*NULL?*/, size_t n, mbstate_t *ps/*NULL?*/);
+
+#ifndef localerpl_do_not_redefine_mbrtoc16
+# ifndef LOCALE_RPL_IMPL
+#  ifdef mbrtoc16
+#   undef mbrtoc16
+#  endif
+#  define mbrtoc16 localerpl_mbrtoc16
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_When(s, A_At(pwi, A_Out_opt))
+A_At(s, A_In_reads_opt(n))
+A_At(ps, A_Inout_opt)
+A_Success(return != A_Size_t(-1))
+#endif
+size_t localerpl_mbrtoc32(unsigned *pwi/*NULL?*/,
+	const char *s/*NULL?*/, size_t n, mbstate_t *ps/*NULL?*/);
+
+#ifndef localerpl_do_not_redefine_mbrtoc32
+# ifndef LOCALE_RPL_IMPL
+#  ifdef mbrtoc32
+#   undef mbrtoc32
+#  endif
+#  define mbrtoc32 localerpl_mbrtoc32
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(s, A_Maybenull A_Post_readable_size(return))
+A_At(ps, A_Inout_opt)
+A_Success(return != A_Size_t(-1))
+/* may return 0 if lower surrogate is required to complete a unicode code point */
+#endif
+size_t localerpl_c16rtomb(char *s/*NULL?*/, wchar_t wc, mbstate_t *ps/*NULL?*/);
+
+#ifndef localerpl_do_not_redefine_c16rtomb
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c16rtomb
+#   undef c16rtomb
+#  endif
+#  define c16rtomb localerpl_c16rtomb
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(s, A_Maybenull A_Post_readable_size(return))
+A_At(ps, A_Inout_opt)
+A_Ret_range(>,0)
+A_Success(return != A_Size_t(-1))
+#endif
+size_t localerpl_c32rtomb(char *s/*NULL?*/, unsigned wi, mbstate_t *ps/*NULL?*/);
+
+#ifndef localerpl_do_not_redefine_c32rtomb
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32rtomb
+#   undef c32rtomb
+#  endif
+#  define c32rtomb localerpl_c32rtomb
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_arg(2)
+A_At(wcstr, A_Out_writes_opt(count))
+A_At(mbstr, A_In_z)
+A_Success(return != A_Size_t(-1))
+#endif
+size_t localerpl_mbstowcs(wchar_t *wcstr, const char *mbstr, size_t count);
+
+#ifndef localerpl_do_not_redefine_mbstowcs
+# ifndef LOCALE_RPL_IMPL
+#  ifdef mbstowcs
+#   undef mbstowcs
+#  endif
+#  define mbstowcs localerpl_mbstowcs
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_arg(2)
+A_At(mbstr, A_Out_writes_opt(count))
+A_At(wcstr, A_In_z)
+A_Success(return != A_Size_t(-1))
+#endif
+size_t localerpl_wcstombs(char *mbstr, const wchar_t *wcstr, size_t count);
+
+#ifndef localerpl_do_not_redefine_wcstombs
+# ifndef LOCALE_RPL_IMPL
+#  ifdef wcstombs
+#   undef wcstombs
+#  endif
+#  define wcstombs localerpl_wcstombs
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(s1, A_In_z)
+A_At(s2, A_In_z)
+#endif
+int localerpl_strcoll(const char *s1, const char *s2);
+
+#ifndef localerpl_do_not_redefine_strcoll
+# ifndef LOCALE_RPL_IMPL
+#  ifdef strcoll
+#   undef strcoll
+#  endif
+#  define strcoll localerpl_strcoll
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(s1, A_In_z)
+A_At(s2, A_In_z)
+#endif
+int localerpl_stricmp(const char *s1, const char *s2);
+
+#ifndef localerpl_do_not_redefine_stricmp
+# ifndef LOCALE_RPL_IMPL
+#  ifdef stricmp
+#   undef stricmp
+#  endif
+#  define stricmp localerpl_stricmp
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(c, A_In_range(0,255))
+#endif
+int localerpl_tolower(int c);
+
+#ifndef localerpl_do_not_redefine_tolower
+# ifndef LOCALE_RPL_IMPL
+#  ifdef tolower
+#   undef tolower
+#  endif
+#  define tolower localerpl_tolower
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(c, A_In_range(0,255))
+#endif
+int localerpl_toupper(int c);
+
+#ifndef localerpl_do_not_redefine_toupper
+# ifndef LOCALE_RPL_IMPL
+#  ifdef toupper
+#   undef toupper
+#  endif
+#  define toupper localerpl_toupper
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(c, A_In_range(0,255))
+#endif
+int localerpl_isascii(int c);
+
+#ifndef localerpl_do_not_redefine_isascii
+# ifndef LOCALE_RPL_IMPL
+#  ifdef isascii
+#   undef isascii
+#  endif
+#  define isascii localerpl_isascii
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(c, A_In_range(0,255))
+#endif
+int localerpl_isalnum(int c);
+
+#ifndef localerpl_do_not_redefine_isalnum
+# ifndef LOCALE_RPL_IMPL
+#  ifdef isalnum
+#   undef isalnum
+#  endif
+#  define isalnum localerpl_isalnum
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(c, A_In_range(0,255))
+#endif
+int localerpl_isalpha(int c);
+
+#ifndef localerpl_do_not_redefine_isalpha
+# ifndef LOCALE_RPL_IMPL
+#  ifdef isalpha
+#   undef isalpha
+#  endif
+#  define isalpha localerpl_isalpha
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(c, A_In_range(0,255))
+#endif
+int localerpl_isblank(int c);
+
+#ifndef localerpl_do_not_redefine_isblank
+# ifndef LOCALE_RPL_IMPL
+#  ifdef isblank
+#   undef isblank
+#  endif
+#  define isblank localerpl_isblank
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(c, A_In_range(0,255))
+#endif
+int localerpl_iscntrl(int c);
+
+#ifndef localerpl_do_not_redefine_iscntrl
+# ifndef LOCALE_RPL_IMPL
+#  ifdef iscntrl
+#   undef iscntrl
+#  endif
+#  define iscntrl localerpl_iscntrl
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(c, A_In_range(0,255))
+#endif
+int localerpl_isdigit(int c);
+
+#ifndef localerpl_do_not_redefine_isdigit
+# ifndef LOCALE_RPL_IMPL
+#  ifdef isdigit
+#   undef isdigit
+#  endif
+#  define isdigit localerpl_isdigit
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(c, A_In_range(0,255))
+#endif
+int localerpl_isgraph(int c);
+
+#ifndef localerpl_do_not_redefine_isgraph
+# ifndef LOCALE_RPL_IMPL
+#  ifdef isgraph
+#   undef isgraph
+#  endif
+#  define isgraph localerpl_isgraph
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(c, A_In_range(0,255))
+#endif
+int localerpl_islower(int c);
+
+#ifndef localerpl_do_not_redefine_islower
+# ifndef LOCALE_RPL_IMPL
+#  ifdef islower
+#   undef islower
+#  endif
+#  define islower localerpl_islower
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(c, A_In_range(0,255))
+#endif
+int localerpl_isprint(int c);
+
+#ifndef localerpl_do_not_redefine_isprint
+# ifndef LOCALE_RPL_IMPL
+#  ifdef isprint
+#   undef isprint
+#  endif
+#  define isprint localerpl_isprint
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(c, A_In_range(0,255))
+#endif
+int localerpl_ispunct(int c);
+
+#ifndef localerpl_do_not_redefine_ispunct
+# ifndef LOCALE_RPL_IMPL
+#  ifdef ispunct
+#   undef ispunct
+#  endif
+#  define ispunct localerpl_ispunct
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(c, A_In_range(0,255))
+#endif
+int localerpl_isspace(int c);
+
+#ifndef localerpl_do_not_redefine_isspace
+# ifndef LOCALE_RPL_IMPL
+#  ifdef isspace
+#   undef isspace
+#  endif
+#  define isspace localerpl_isspace
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(c, A_In_range(0,255))
+#endif
+int localerpl_isupper(int c);
+
+#ifndef localerpl_do_not_redefine_isupper
+# ifndef LOCALE_RPL_IMPL
+#  ifdef isupper
+#   undef isupper
+#  endif
+#  define isupper localerpl_isupper
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(c, A_In_range(0,255))
+#endif
+int localerpl_isxdigit(int c);
+
+#ifndef localerpl_do_not_redefine_isxdigit
+# ifndef LOCALE_RPL_IMPL
+#  ifdef isxdigit
+#   undef isxdigit
+#  endif
+#  define isxdigit localerpl_isxdigit
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(s1, A_In_z)
+A_At(s2, A_In_z)
+#endif
+int localerpl_c32scoll(const unsigned *s1, const unsigned *s2);
+
+#ifndef localerpl_do_not_redefine_c32scoll
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32scoll
+#   undef c32scoll
+#  endif
+#  define c32scoll localerpl_c32scoll
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(s1, A_In_z)
+A_At(s2, A_In_z)
+#endif
+int localerpl_c32sicmp(const unsigned *s1, const unsigned *s2);
+
+#ifndef localerpl_do_not_redefine_c32sicmp
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32sicmp
+#   undef c32sicmp
+#  endif
+#  define c32sicmp localerpl_c32sicmp
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+unsigned localerpl_c32tolower(unsigned c);
+
+#ifndef localerpl_do_not_redefine_c32tolower
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32tolower
+#   undef c32tolower
+#  endif
+#  define c32tolower localerpl_c32tolower
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+unsigned localerpl_c32toupper(unsigned c);
+
+#ifndef localerpl_do_not_redefine_c32toupper
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32toupper
+#   undef c32toupper
+#  endif
+#  define c32toupper localerpl_c32toupper
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+int localerpl_c32isascii(unsigned c);
+
+#ifndef localerpl_do_not_redefine_c32isascii
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32isascii
+#   undef c32isascii
+#  endif
+#  define c32isascii localerpl_c32isascii
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+int localerpl_c32isalnum(unsigned c);
+
+#ifndef localerpl_do_not_redefine_c32isalnum
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32isalnum
+#   undef c32isalnum
+#  endif
+#  define c32isalnum localerpl_c32isalnum
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+int localerpl_c32isalpha(unsigned c);
+
+#ifndef localerpl_do_not_redefine_c32isalpha
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32isalpha
+#   undef c32isalpha
+#  endif
+#  define c32isalpha localerpl_c32isalpha
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+int localerpl_c32isblank(unsigned c);
+
+#ifndef localerpl_do_not_redefine_c32isblank
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32isblank
+#   undef c32isblank
+#  endif
+#  define c32isblank localerpl_c32isblank
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+int localerpl_c32iscntrl(unsigned c);
+
+#ifndef localerpl_do_not_redefine_c32iscntrl
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32iscntrl
+#   undef c32iscntrl
+#  endif
+#  define c32iscntrl localerpl_c32iscntrl
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+int localerpl_c32isdigit(unsigned c);
+
+#ifndef localerpl_do_not_redefine_c32isdigit
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32isdigit
+#   undef c32isdigit
+#  endif
+#  define c32isdigit localerpl_c32isdigit
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+int localerpl_c32isgraph(unsigned c);
+
+#ifndef localerpl_do_not_redefine_c32isgraph
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32isgraph
+#   undef c32isgraph
+#  endif
+#  define c32isgraph localerpl_c32isgraph
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+int localerpl_c32islower(unsigned c);
+
+#ifndef localerpl_do_not_redefine_c32islower
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32islower
+#   undef c32islower
+#  endif
+#  define c32islower localerpl_c32islower
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+int localerpl_c32isprint(unsigned c);
+
+#ifndef localerpl_do_not_redefine_c32isprint
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32isprint
+#   undef c32isprint
+#  endif
+#  define c32isprint localerpl_c32isprint
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+int localerpl_c32ispunct(unsigned c);
+
+#ifndef localerpl_do_not_redefine_c32ispunct
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32ispunct
+#   undef c32ispunct
+#  endif
+#  define c32ispunct localerpl_c32ispunct
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+int localerpl_c32isspace(unsigned c);
+
+#ifndef localerpl_do_not_redefine_c32isspace
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32isspace
+#   undef c32isspace
+#  endif
+#  define c32isspace localerpl_c32isspace
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+int localerpl_c32isupper(unsigned c);
+
+#ifndef localerpl_do_not_redefine_c32isupper
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32isupper
+#   undef c32isupper
+#  endif
+#  define c32isupper localerpl_c32isupper
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+int localerpl_c32isxdigit(unsigned c);
+
+#ifndef localerpl_do_not_redefine_c32isxdigit
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32isxdigit
+#   undef c32isxdigit
+#  endif
+#  define c32isxdigit localerpl_c32isxdigit
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(name, A_In_z)
+#endif
+c32ctype_t localerpl_c32ctype(const char *name);
+
+#ifndef localerpl_do_not_redefine_c32ctype
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32ctype
+#   undef c32ctype
+#  endif
+#  define c32ctype localerpl_c32ctype
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+#endif
+int localerpl_c32isctype(unsigned c, c32ctype_t desc);
+
+#ifndef localerpl_do_not_redefine_c32isctype
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32isctype
+#   undef c32isctype
+#  endif
+#  define c32isctype localerpl_c32isctype
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_arg(2)
+A_At(dst, A_Out_writes_opt(n))
+A_At(src, A_In_z)
+A_When(dst, A_At(n, A_In_range(<=,INT_MAX)))
+A_Success(return != A_Size_t(-1))
+#endif
+size_t localerpl_mbstoc32s(unsigned *dst, const char *src, size_t n);
+
+#ifndef localerpl_do_not_redefine_mbstoc32s
+# ifndef LOCALE_RPL_IMPL
+#  ifdef mbstoc32s
+#   undef mbstoc32s
+#  endif
+#  define mbstoc32s localerpl_mbstoc32s
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_arg(2)
+A_At(dst, A_Out_writes_opt(n))
+A_At(src, A_In_z)
+A_Success(return != A_Size_t(-1))
+#endif
+size_t localerpl_c32stombs(char *dst, const unsigned *src, size_t n);
+
+#ifndef localerpl_do_not_redefine_c32stombs
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32stombs
+#   undef c32stombs
+#  endif
+#  define c32stombs localerpl_c32stombs
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_arg(2)
+A_At(dst, A_Out_writes_opt(n))
+A_At(src, A_In_z)
+A_Success(return != A_Size_t(-1))
+#endif
+size_t localerpl_wcstoc32s(unsigned *dst, const wchar_t *src, size_t n);
+
+#ifndef localerpl_do_not_redefine_wcstoc32s
+# ifndef LOCALE_RPL_IMPL
+#  ifdef wcstoc32s
+#   undef wcstoc32s
+#  endif
+#  define wcstoc32s localerpl_wcstoc32s
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_arg(2)
+A_At(dst, A_Out_writes_opt(n))
+A_At(src, A_In_z)
+A_Success(return != A_Size_t(-1))
+#endif
+size_t localerpl_c32stowcs(wchar_t *dst, const unsigned *src, size_t n);
+
+#ifndef localerpl_do_not_redefine_c32stowcs
+# ifndef LOCALE_RPL_IMPL
+#  ifdef c32stowcs
+#   undef c32stowcs
+#  endif
+#  define c32stowcs localerpl_c32stowcs
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(cmdname, A_In_z)
+A_At(argv, A_Notnull)
+#endif
+intptr_t localerpl_spawnvp(int mode, const char *cmdname, const char *const *argv);
+
+#ifndef localerpl_do_not_redefine_spawnvp
+# ifndef LOCALE_RPL_IMPL
+#  ifdef spawnvp
+#   undef spawnvp
+#  endif
+#  define spawnvp localerpl_spawnvp
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_At(cmdname, A_In_z)
+#endif
+intptr_t localerpl_spawnl_utf8(int mode, const char *cmdname, ...);
+
+#define localerpl_spawnl (localerpl_is_utf8() ? localerpl_spawnl_utf8 : _spawnl)
+
+#ifndef localerpl_do_not_redefine_spawnl
+# ifndef LOCALE_RPL_IMPL
+#  ifdef spawnl
+#   undef spawnl
+#  endif
+#  define spawnl localerpl_spawnl
+# endif
+#endif
+
+#ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
+A_Check_return
+A_Nonnull_all_args
+A_At(command, A_In_z)
+A_At(mode, A_In_z)
+A_Success(return)
+#endif
+FILE *localerpl_popen(const char *command, const char *mode);
+
+#ifndef localerpl_do_not_redefine_popen
+# ifndef LOCALE_RPL_IMPL
+#  ifdef popen
+#   undef popen
+#  endif
+#  define popen localerpl_popen
+# endif
+#endif
 
 #ifndef LOCALE_RPL_IMPL
 
@@ -265,536 +1619,6 @@ extern int unicode_isctype(unsigned w, int t);
 #ifdef __cplusplus
 }
 #endif
-
-#ifndef localerpl_do_not_redefine_open
-#ifdef open
-#undef open
-#endif
-#define open localerpl_rpl_open
-#endif
-#define localerpl_rpl_open localerpl->rpl_open
-
-#ifndef localerpl_do_not_redefine_fopen
-#ifdef fopen
-#undef fopen
-#endif
-#define fopen localerpl_rpl_fopen
-#endif
-static inline FILE *localerpl_rpl_fopen(const char *path, const char *mode)
-{
-	return localerpl->rpl_fopen(path, mode);
-}
-
-#ifndef localerpl_do_not_redefine_read
-#ifdef read
-#undef read
-#endif
-#define read localerpl_rpl_read
-#endif
-static inline int localerpl_rpl_read(int fd, void *buf, unsigned count)
-{
-	return localerpl->rpl_read(fd, buf, count);
-}
-
-#ifndef localerpl_do_not_redefine_write
-#ifdef write
-#undef write
-#endif
-#define write localerpl_rpl_write
-#endif
-static inline int localerpl_rpl_write(int fd, const void *buf, unsigned count)
-{
-	return localerpl->rpl_write(fd, buf, count);
-}
-
-#ifndef localerpl_do_not_redefine_fread
-#ifdef fread
-#undef fread
-#endif
-#define fread localerpl_rpl_fread
-#endif
-static inline size_t localerpl_rpl_fread(void *buf, size_t size, size_t nmemb, FILE *stream)
-{
-	return localerpl->rpl_fread(buf, size, nmemb, stream);
-}
-
-#ifndef localerpl_do_not_redefine_fwrite
-#ifdef fwrite
-#undef fwrite
-#endif
-#define fwrite localerpl_rpl_fwrite
-#endif
-static inline size_t localerpl_rpl_fwrite(const void *buf, size_t size, size_t nmemb, FILE *stream)
-{
-	return localerpl->rpl_fwrite(buf, size, nmemb, stream);
-}
-
-#ifndef localerpl_do_not_redefine_putchar
-#ifdef putchar
-#undef putchar
-#endif
-#define putchar localerpl_rpl_putchar
-#endif
-static inline int localerpl_rpl_putchar(int c)
-{
-	return localerpl->rpl_putchar(c);
-}
-
-#ifndef localerpl_do_not_redefine_fputc
-#ifdef fputc
-#undef fputc
-#endif
-#define fputc localerpl_rpl_fputc
-#endif
-static inline int localerpl_rpl_fputc(int c, FILE *stream)
-{
-	return localerpl->rpl_fputc(c, stream);
-}
-
-#ifndef localerpl_do_not_redefine_getchar
-#ifdef getchar
-#undef getchar
-#endif
-#define getchar localerpl_rpl_getchar
-#endif
-static inline int localerpl_rpl_getchar(void)
-{
-	return localerpl->rpl_getchar();
-}
-
-#ifndef localerpl_do_not_redefine_fgetc
-#ifdef fgetc
-#undef fgetc
-#endif
-#define fgetc localerpl_rpl_fgetc
-#endif
-static inline int localerpl_rpl_fgetc(FILE *stream)
-{
-	return localerpl->rpl_fgetc(stream);
-}
-
-#ifndef localerpl_do_not_redefine_puts
-#ifdef puts
-#undef puts
-#endif
-#define puts localerpl_rpl_puts
-#endif
-static inline int localerpl_rpl_puts(const char *s)
-{
-	return localerpl->rpl_puts(s);
-}
-
-#ifndef localerpl_do_not_redefine_fputs
-#ifdef fputs
-#undef fputs
-#endif
-#define fputs localerpl_rpl_fputs
-#endif
-static inline int localerpl_rpl_fputs(const char *s, FILE *stream)
-{
-	return localerpl->rpl_fputs(s, stream);
-}
-
-#ifndef localerpl_do_not_redefine_fgets
-#ifdef fgets
-#undef fgets
-#endif
-#define fgets localerpl_rpl_fgets
-#endif
-static inline char *localerpl_rpl_fgets(char *s, int size, FILE *stream)
-{
-	return localerpl->rpl_fgets(s, size, stream);
-}
-
-#ifndef localerpl_do_not_redefine_mkdir
-#ifdef mkdir
-#undef mkdir
-#endif
-#define mkdir localerpl_rpl_mkdir
-#endif
-static inline int localerpl_rpl_mkdir(const char *dirname)
-{
-	return localerpl->rpl_mkdir(dirname);
-}
-
-#ifndef localerpl_do_not_redefine_rmdir
-#ifdef rmdir
-#undef rmdir
-#endif
-#define rmdir localerpl_rpl_rmdir
-#endif
-static inline int localerpl_rpl_rmdir(const char *dirname)
-{
-	return localerpl->rpl_rmdir(dirname);
-}
-
-#ifndef localerpl_do_not_redefine_remove
-#ifdef remove
-#undef remove
-#endif
-#define remove localerpl_rpl_remove
-#endif
-static inline int localerpl_rpl_remove(const char *pathname)
-{
-	return localerpl->rpl_remove(pathname);
-}
-
-#ifndef localerpl_do_not_redefine_unlink
-#ifdef unlink
-#undef undef
-#endif
-#define unlink localerpl_rpl_unlink
-#endif
-static inline int localerpl_rpl_unlink(const char *pathname)
-{
-	return localerpl->rpl_unlink(pathname);
-}
-
-#ifndef localerpl_do_not_redefine_rename
-#ifdef rename
-#undef rename
-#endif
-#define rename localerpl_rpl_rename
-#endif
-static inline int localerpl_rpl_rename(const char *old_name, const char *new_name)
-{
-	return localerpl->rpl_rename(old_name, new_name);
-}
-
-#ifndef localerpl_do_not_redefine_chdir
-#ifdef chdir
-#undef chdir
-#endif
-#define chdir localerpl_rpl_chdir
-#endif
-static inline int localerpl_rpl_chdir(const char *path)
-{
-	return localerpl->rpl_chdir(path);
-}
-
-#ifndef localerpl_do_not_redefine_stat
-#ifdef stat
-#undef stat
-#endif
-#define stat(name, buf) localerpl_rpl_stat(name, buf)
-#endif
-#define localerpl_rpl_stat(name, buf) localerpl->rpl_stat(name, buf)
-
-#ifndef localerpl_do_not_redefine_chmod
-#ifdef chmod
-#undef chmod
-#endif
-#define chmod localerpl_rpl_chmod
-#endif
-static inline int localerpl_rpl_chmod(const char *path, int mode)
-{
-	return localerpl->rpl_chmod(path, mode);
-}
-
-#ifndef localerpl_do_not_redefine_setlocale
-#ifdef setlocale
-#undef setlocale
-#endif
-#define setlocale localerpl_rpl_setlocale
-#endif
-static inline char *localerpl_rpl_setlocale(int category, const char *locale)
-{
-	return localerpl->rpl_setlocale(category, locale);
-}
-
-#ifndef localerpl_do_not_redefine_MB_CUR_MAX
-#ifdef MB_CUR_MAX
-#undef MB_CUR_MAX
-#endif
-#define MB_CUR_MAX localerpl_MB_CUR_MAX
-#endif
-#define localerpl_MB_CUR_MAX localerpl->rpl_mb_cur_max()
-
-#ifndef localerpl_do_not_redefine_btowc
-#ifdef btowc
-#undef btowc
-#endif
-#define btowc localerpl_rpl_btowc
-#endif
-static inline wint_t localerpl_rpl_btowc(int c)
-{
-	return localerpl->rpl_btowc(c);
-}
-
-#ifndef localerpl_do_not_redefine_mblen
-#ifdef mblen
-#undef mblen
-#endif
-#define mblen localerpl_rpl_mblen
-#endif
-static inline int localerpl_rpl_mblen(const char *s, size_t n)
-{
-	return localerpl->rpl_mblen(s, n);
-}
-
-#ifndef localerpl_do_not_redefine_mbrlen
-#ifdef mbrlen
-#undef mbrlen
-#endif
-#define mbrlen localerpl_rpl_mbrlen
-#endif
-static inline size_t localerpl_rpl_mbrlen(const char *s, size_t n, mbstate_t *ps)
-{
-	return localerpl->rpl_mbrlen(s, n, ps);
-}
-
-#ifndef localerpl_do_not_redefine_mbrtoc16
-#ifdef mbrtoc16
-#undef mbrtoc16
-#endif
-#define mbrtoc16 localerpl_rpl_mbrtoc16
-#endif
-static inline size_t localerpl_rpl_mbrtoc16(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
-{
-	return localerpl->rpl_mbrtoc16(pwc, s, n, ps);
-}
-
-#ifndef localerpl_do_not_redefine_mbrtoc32
-#ifdef mbrtoc32
-#undef mbrtoc32
-#endif
-#define mbrtoc32 localerpl_rpl_mbrtoc32
-#endif
-static inline size_t localerpl_rpl_mbrtoc32(unsigned *pwi, const char *s, size_t n, mbstate_t *ps)
-{
-	return localerpl->rpl_mbrtoc32(pwi, s, n, ps);
-}
-
-#ifndef localerpl_do_not_redefine_c16rtomb
-#ifdef c16rtomb
-#undef c16rtomb
-#endif
-#define c16rtomb localerpl_rpl_c16rtomb
-#endif
-static inline size_t localerpl_rpl_c16rtomb(char *s, wchar_t wc, mbstate_t *ps)
-{
-	return localerpl->rpl_c16rtomb(s, wc, ps);
-}
-
-#ifndef localerpl_do_not_redefine_c32rtomb
-#ifdef c32rtomb
-#undef c32rtomb
-#endif
-#define c32rtomb localerpl_rpl_c32rtomb
-#endif
-static inline size_t localerpl_rpl_c32rtomb(char *s, unsigned wi, mbstate_t *ps)
-{
-	return localerpl->rpl_c32rtomb(s, wi, ps);
-}
-
-#ifndef localerpl_do_not_redefine_mbstowcs
-#ifdef mbstowcs
-#undef mbstowcs
-#endif
-#define mbstowcs localerpl_rpl_mbstowcs
-#endif
-static inline size_t localerpl_rpl_mbstowcs(wchar_t *wcstr, const char *mbstr, size_t count)
-{
-	return localerpl->rpl_mbstowcs(wcstr, mbstr, count);
-}
-
-#ifndef localerpl_do_not_redefine_wcstombs
-#ifdef wcstombs
-#undef wcstombs
-#endif
-#define wcstombs localerpl_rpl_wcstombs
-#endif
-static inline size_t localerpl_rpl_wcstombs(char *mbstr, const wchar_t *wcstr, size_t count)
-{
-	return localerpl->rpl_wcstombs(mbstr, wcstr, count);
-}
-
-#ifndef localerpl_do_not_redefine_strcoll
-#ifdef strcoll
-#undef strcoll
-#endif
-#define strcoll localerpl_rpl_strcoll
-#endif
-static inline int localerpl_rpl_strcoll(const char *s1, const char *s2)
-{
-	return localerpl->rpl_strcoll(s1, s2);
-}
-
-#ifndef localerpl_do_not_redefine_stricmp
-#ifdef stricmp
-#undef stricmp
-#endif
-#define stricmp localerpl_rpl_stricmp
-#endif
-static inline int localerpl_rpl_stricmp(const char *s1, const char *s2)
-{
-	return localerpl->rpl_stricmp(s1, s2);
-}
-
-#ifndef localerpl_do_not_redefine_tolower
-#ifdef tolower
-#undef tolower
-#endif
-#define tolower localerpl_rpl_tolower
-#endif
-static inline int localerpl_rpl_tolower(int c)
-{
-	return localerpl->rpl_tolower(c);
-}
-
-#ifndef localerpl_do_not_redefine_toupper
-#ifdef toupper
-#undef toupper
-#endif
-#define toupper localerpl_rpl_toupper
-#endif
-static inline int localerpl_rpl_toupper(int c)
-{
-	return localerpl->rpl_toupper(c);
-}
-
-#ifndef localerpl_do_not_redefine_isascii
-#ifdef isascii
-#undef isascii
-#endif
-#define isascii localerpl_rpl_isascii
-#endif
-static inline int localerpl_rpl_isascii(int c)
-{
-	return localerpl->rpl_isascii(c);
-}
-
-#ifndef localerpl_do_not_redefine_isalnum
-#ifdef isalnum
-#undef isalnum
-#endif
-#define isalnum localerpl_rpl_isalnum
-#endif
-static inline int localerpl_rpl_isalnum(int c)
-{
-	return localerpl->rpl_isalnum(c);
-}
-
-#ifndef localerpl_do_not_redefine_isalpha
-#ifdef isalpha
-#undef isalpha
-#endif
-#define isalpha localerpl_rpl_isalpha
-#endif
-static inline int localerpl_rpl_isalpha(int c)
-{
-	return localerpl->rpl_isalpha(c);
-}
-
-#ifndef localerpl_do_not_redefine_isblank
-#ifdef isblank
-#undef isblank
-#endif
-#define isblank localerpl_rpl_isblank
-#endif
-static inline int localerpl_rpl_isblank(int c)
-{
-	return localerpl->rpl_isblank(c);
-}
-
-#ifndef localerpl_do_not_redefine_iscntrl
-#ifdef iscntrl
-#undef iscntrl
-#endif
-#define iscntrl localerpl_rpl_iscntrl
-#endif
-static inline int localerpl_rpl_iscntrl(int c)
-{
-	return localerpl->rpl_iscntrl(c);
-}
-
-#ifndef localerpl_do_not_redefine_isdigit
-#ifdef isdigit
-#undef isdigit
-#endif
-#define isdigit localerpl_rpl_isdigit
-#endif
-static inline int localerpl_rpl_isdigit(int c)
-{
-	return localerpl->rpl_isdigit(c);
-}
-
-#ifndef localerpl_do_not_redefine_isgraph
-#ifdef isgraph
-#undef isgraph
-#endif
-#define isgraph localerpl_rpl_isgraph
-#endif
-static inline int localerpl_rpl_isgraph(int c)
-{
-	return localerpl->rpl_isgraph(c);
-}
-
-#ifndef localerpl_do_not_redefine_islower
-#ifdef islower
-#undef islower
-#endif
-#define islower localerpl_rpl_islower
-#endif
-static inline int localerpl_rpl_islower(int c)
-{
-	return localerpl->rpl_islower(c);
-}
-
-#ifndef localerpl_do_not_redefine_isprint
-#ifdef isprint
-#undef isprint
-#endif
-#define isprint localerpl_rpl_isprint
-#endif
-static inline int localerpl_rpl_isprint(int c)
-{
-	return localerpl->rpl_isprint(c);
-}
-
-#ifndef localerpl_do_not_redefine_ispunct
-#ifdef ispunct
-#undef ispunct
-#endif
-#define ispunct localerpl_rpl_ispunct
-#endif
-static inline int localerpl_rpl_ispunct(int c)
-{
-	return localerpl->rpl_ispunct(c);
-}
-
-#ifndef localerpl_do_not_redefine_isspace
-#ifdef isspace
-#undef isspace
-#endif
-#define isspace localerpl_rpl_isspace
-#endif
-static inline int localerpl_rpl_isspace(int c)
-{
-	return localerpl->rpl_isspace(c);
-}
-
-#ifndef localerpl_do_not_redefine_isupper
-#ifdef isupper
-#undef isupper
-#endif
-#define isupper localerpl_rpl_isupper
-#endif
-static inline int localerpl_rpl_isupper(int c)
-{
-	return localerpl->rpl_isupper(c);
-}
-
-#ifndef localerpl_do_not_redefine_isxdigit
-#ifdef isxdigit
-#undef isxdigit
-#endif
-#define isxdigit localerpl_rpl_isxdigit
-#endif
-static inline int localerpl_rpl_isxdigit(int c)
-{
-	return localerpl->rpl_isxdigit(c);
-}
 
 /* banned functions */
 
@@ -896,7 +1720,7 @@ static inline int localerpl_rpl_isxdigit(int c)
 
 #else /* LOCALERPL_NEED_CALLBACKS */
 
-#define wcscoll localerpl_rpl_wcscoll
+#define wcscoll localerpl_wcscoll
 static inline int wcscoll(const wchar_t *s1, const wchar_t *s2)
 {
 	(void)s1, (void)s2;
@@ -904,7 +1728,7 @@ static inline int wcscoll(const wchar_t *s1, const wchar_t *s2)
 	return -1;
 }
 
-#define wcsicmp localerpl_rpl_wcsicmp
+#define wcsicmp localerpl_wcsicmp
 static inline int wcsicmp(const wchar_t *s1, const wchar_t *s2)
 {
 	(void)s1, (void)s2;
@@ -912,21 +1736,21 @@ static inline int wcsicmp(const wchar_t *s1, const wchar_t *s2)
 	return -1;
 }
 
-#define towlower localerpl_rpl_towlower
+#define towlower localerpl_towlower
 static inline wint_t towlower(wint_t c)
 {
 	assert(0); /* use c32tolower instead */
 	return c;
 }
 
-#define towupper localerpl_rpl_towupper
+#define towupper localerpl_towupper
 static inline wint_t towupper(wint_t c)
 {
 	assert(0); /* use c32toupper instead */
 	return c;
 }
 
-#define iswascii localerpl_rpl_iswascii
+#define iswascii localerpl_iswascii
 static inline int iswascii(wint_t c)
 {
 	(void)c;
@@ -934,7 +1758,7 @@ static inline int iswascii(wint_t c)
 	return 0;
 }
 
-#define iswalnum localerpl_rpl_iswalnum
+#define iswalnum localerpl_iswalnum
 static inline int iswalnum(wint_t c)
 {
 	(void)c;
@@ -942,7 +1766,7 @@ static inline int iswalnum(wint_t c)
 	return 0;
 }
 
-#define iswalpha localerpl_rpl_iswalpha
+#define iswalpha localerpl_iswalpha
 static inline int iswalpha(wint_t c)
 {
 	(void)c;
@@ -950,7 +1774,7 @@ static inline int iswalpha(wint_t c)
 	return 0;
 }
 
-#define iswblank localerpl_rpl_iswblank
+#define iswblank localerpl_iswblank
 static inline int iswblank(wint_t c)
 {
 	(void)c;
@@ -958,7 +1782,7 @@ static inline int iswblank(wint_t c)
 	return 0;
 }
 
-#define iswcntrl localerpl_rpl_iswcntrl
+#define iswcntrl localerpl_iswcntrl
 static inline int iswcntrl(wint_t c)
 {
 	(void)c;
@@ -966,7 +1790,7 @@ static inline int iswcntrl(wint_t c)
 	return 0;
 }
 
-#define iswdigit localerpl_rpl_iswdigit
+#define iswdigit localerpl_iswdigit
 static inline int iswdigit(wint_t c)
 {
 	(void)c;
@@ -974,7 +1798,7 @@ static inline int iswdigit(wint_t c)
 	return 0;
 }
 
-#define iswgraph localerpl_rpl_iswgraph
+#define iswgraph localerpl_iswgraph
 static inline int iswgraph(wint_t c)
 {
 	(void)c;
@@ -982,7 +1806,7 @@ static inline int iswgraph(wint_t c)
 	return 0;
 }
 
-#define iswlower localerpl_rpl_iswlower
+#define iswlower localerpl_iswlower
 static inline int iswlower(wint_t c)
 {
 	(void)c;
@@ -990,7 +1814,7 @@ static inline int iswlower(wint_t c)
 	return 0;
 }
 
-#define iswprint localerpl_rpl_iswprint
+#define iswprint localerpl_iswprint
 static inline int iswprint(wint_t c)
 {
 	(void)c;
@@ -998,7 +1822,7 @@ static inline int iswprint(wint_t c)
 	return 0;
 }
 
-#define iswpunct localerpl_rpl_iswpunct
+#define iswpunct localerpl_iswpunct
 static inline int iswpunct(wint_t c)
 {
 	(void)c;
@@ -1006,7 +1830,7 @@ static inline int iswpunct(wint_t c)
 	return 0;
 }
 
-#define iswspace localerpl_rpl_iswspace
+#define iswspace localerpl_iswspace
 static inline int iswspace(wint_t c)
 {
 	(void)c;
@@ -1014,7 +1838,7 @@ static inline int iswspace(wint_t c)
 	return 0;
 }
 
-#define iswupper localerpl_rpl_iswupper
+#define iswupper localerpl_iswupper
 static inline int iswupper(wint_t c)
 {
 	(void)c;
@@ -1022,7 +1846,7 @@ static inline int iswupper(wint_t c)
 	return 0;
 }
 
-#define iswxdigit localerpl_rpl_iswxdigit
+#define iswxdigit localerpl_iswxdigit
 static inline int iswxdigit(wint_t c)
 {
 	(void)c;
@@ -1030,7 +1854,7 @@ static inline int iswxdigit(wint_t c)
 	return 0;
 }
 
-#define wctype localerpl_rpl_wctype
+#define wctype localerpl_wctype
 static inline wctype_t wctype(const char *name)
 {
 	(void)name;
@@ -1038,7 +1862,7 @@ static inline wctype_t wctype(const char *name)
 	return 0;
 }
 
-#define iswctype localerpl_rpl_iswctype
+#define iswctype localerpl_iswctype
 static inline int iswctype(wint_t c, wctype_t desc)
 {
 	(void)c, (void)desc;
@@ -1046,7 +1870,7 @@ static inline int iswctype(wint_t c, wctype_t desc)
 	return 0;
 }
 
-#define mbtowc localerpl_rpl_mbtowc
+#define mbtowc localerpl_mbtowc
 static inline int mbtowc(wchar_t *pwc, const char *s, size_t n)
 {
 	(void)pwc, (void)s, (void)n;
@@ -1054,7 +1878,7 @@ static inline int mbtowc(wchar_t *pwc, const char *s, size_t n)
 	return 0;
 }
 
-#define mbrtowc localerpl_rpl_mbrtowc
+#define mbrtowc localerpl_mbrtowc
 static inline size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *ps)
 {
 	(void)pwc, (void)s, (void)n, (void)ps;
@@ -1062,7 +1886,7 @@ static inline size_t mbrtowc(wchar_t *pwc, const char *s, size_t n, mbstate_t *p
 	return 0;
 }
 
-#define wctomb localerpl_rpl_wctomb
+#define wctomb localerpl_wctomb
 static inline int wctomb(char *s, wchar_t wc)
 {
 	(void)s, (void)wc;
@@ -1070,7 +1894,7 @@ static inline int wctomb(char *s, wchar_t wc)
 	return 0;
 }
 
-#define wcrtomb localerpl_rpl_wcrtomb
+#define wcrtomb localerpl_wcrtomb
 static inline size_t wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 {
 	(void)s, (void)wc, (void)ps;
@@ -1080,421 +1904,7 @@ static inline size_t wcrtomb(char *s, wchar_t wc, mbstate_t *ps)
 
 #endif /* LOCALERPL_NEED_CALLBACKS */
 
-#ifndef localerpl_do_not_redefine_c32scoll
-#ifdef c32scoll
-#undef c32scoll
-#endif
-#define c32scoll localerpl_rpl_c32scoll
-#endif
-static inline int localerpl_rpl_c32scoll(const unsigned *s1, const unsigned *s2)
-{
-	return localerpl->rpl_c32scoll(s1, s2);
-}
-
-#ifndef localerpl_do_not_redefine_c32sicmp
-#ifdef c32sicmp
-#undef c32sicmp
-#endif
-#define c32sicmp localerpl_rpl_c32sicmp
-#endif
-static inline int localerpl_rpl_c32sicmp(const unsigned *s1, const unsigned *s2)
-{
-	return localerpl->rpl_c32sicmp(s1, s2);
-}
-
-#ifndef localerpl_do_not_redefine_c32tolower
-#ifdef c32tolower
-#undef c32tolower
-#endif
-#define c32tolower localerpl_rpl_c32tolower
-#endif
-static inline unsigned localerpl_rpl_c32tolower(unsigned c)
-{
-	return localerpl->rpl_c32tolower(c);
-}
-
-#ifndef localerpl_do_not_redefine_c32toupper
-#ifdef c32toupper
-#undef c32toupper
-#endif
-#define c32toupper localerpl_rpl_c32toupper
-#endif
-static inline unsigned localerpl_rpl_c32toupper(unsigned c)
-{
-	return localerpl->rpl_c32toupper(c);
-}
-
-#ifndef localerpl_do_not_redefine_c32isascii
-#ifdef c32isascii
-#undef c32isascii
-#endif
-#define c32isascii localerpl_rpl_c32isascii
-#endif
-static inline int localerpl_rpl_c32isascii(unsigned c)
-{
-	return localerpl->rpl_c32isascii(c);
-}
-
-#ifndef localerpl_do_not_redefine_c32isalnum
-#ifdef c32isalnum
-#undef c32isalnum
-#endif
-#define c32isalnum localerpl_rpl_c32isalnum
-#endif
-static inline int localerpl_rpl_c32isalnum(unsigned c)
-{
-	return localerpl->rpl_c32isalnum(c);
-}
-
-#ifndef localerpl_do_not_redefine_c32isalpha
-#ifdef c32isalpha
-#undef c32isalpha
-#endif
-#define c32isalpha localerpl_rpl_c32isalpha
-#endif
-static inline int localerpl_rpl_c32isalpha(unsigned c)
-{
-	return localerpl->rpl_c32isalpha(c);
-}
-
-#ifndef localerpl_do_not_redefine_c32isblank
-#ifdef c32isblank
-#undef c32isblank
-#endif
-#define c32isblank localerpl_rpl_c32isblank
-#endif
-static inline int localerpl_rpl_c32isblank(unsigned c)
-{
-	return localerpl->rpl_c32isblank(c);
-}
-
-#ifndef localerpl_do_not_redefine_c32iscntrl
-#ifdef c32iscntrl
-#undef c32iscntrl
-#endif
-#define c32iscntrl localerpl_rpl_c32iscntrl
-#endif
-static inline int localerpl_rpl_c32iscntrl(unsigned c)
-{
-	return localerpl->rpl_c32iscntrl(c);
-}
-
-#ifndef localerpl_do_not_redefine_c32isdigit
-#ifdef c32isdigit
-#undef c32isdigit
-#endif
-#define c32isdigit localerpl_rpl_c32isdigit
-#endif
-static inline int localerpl_rpl_c32isdigit(unsigned c)
-{
-	return localerpl->rpl_c32isdigit(c);
-}
-
-#ifndef localerpl_do_not_redefine_c32isgraph
-#ifdef c32isgraph
-#undef c32isgraph
-#endif
-#define c32isgraph localerpl_rpl_c32isgraph
-#endif
-static inline int localerpl_rpl_c32isgraph(unsigned c)
-{
-	return localerpl->rpl_c32isgraph(c);
-}
-
-#ifndef localerpl_do_not_redefine_c32islower
-#ifdef c32islower
-#undef c32islower
-#endif
-#define c32islower localerpl_rpl_c32islower
-#endif
-static inline int localerpl_rpl_c32islower(unsigned c)
-{
-	return localerpl->rpl_c32islower(c);
-}
-
-#ifndef localerpl_do_not_redefine_c32isprint
-#ifdef c32isprint
-#undef c32isprint
-#endif
-#define c32isprint localerpl_rpl_c32isprint
-#endif
-static inline int localerpl_rpl_c32isprint(unsigned c)
-{
-	return localerpl->rpl_c32isprint(c);
-}
-
-#ifndef localerpl_do_not_redefine_c32ispunct
-#ifdef c32ispunct
-#undef c32ispunct
-#endif
-#define c32ispunct localerpl_rpl_c32ispunct
-#endif
-static inline int localerpl_rpl_c32ispunct(unsigned c)
-{
-	return localerpl->rpl_c32ispunct(c);
-}
-
-#ifndef localerpl_do_not_redefine_c32isspace
-#ifdef c32isspace
-#undef c32isspace
-#endif
-#define c32isspace localerpl_rpl_c32isspace
-#endif
-static inline int localerpl_rpl_c32isspace(unsigned c)
-{
-	return localerpl->rpl_c32isspace(c);
-}
-
-#ifndef localerpl_do_not_redefine_c32isupper
-#ifdef c32isupper
-#undef c32isupper
-#endif
-#define c32isupper localerpl_rpl_c32isupper
-#endif
-static inline int localerpl_rpl_c32isupper(unsigned c)
-{
-	return localerpl->rpl_c32isupper(c);
-}
-
-#ifndef localerpl_do_not_redefine_c32isxdigit
-#ifdef c32isxdigit
-#undef c32isxdigit
-#endif
-#define c32isxdigit localerpl_rpl_c32isxdigit
-#endif
-static inline int localerpl_rpl_c32isxdigit(unsigned c)
-{
-	return localerpl->rpl_c32isxdigit(c);
-}
-
-#ifndef localerpl_do_not_redefine_c32ctype
-#ifdef c32ctype
-#undef c32ctype
-#endif
-#define c32ctype localerpl_rpl_c32ctype
-#endif
-static inline c32ctype_t localerpl_rpl_c32ctype(const char *name)
-{
-	return localerpl->rpl_c32ctype(name);
-}
-
-#ifndef localerpl_do_not_redefine_c32isctype
-#ifdef c32isctype
-#undef c32isctype
-#endif
-#define c32isctype localerpl_rpl_c32isctype
-#endif
-static inline int localerpl_rpl_c32isctype(unsigned c, c32ctype_t desc)
-{
-	return localerpl->rpl_c32isctype(c, desc);
-}
-
-#ifndef localerpl_do_not_redefine_mbstoc32s
-#ifdef mbstoc32s
-#undef mbstoc32s
-#endif
-#define mbstoc32s localerpl_rpl_mbstoc32s
-#endif
-static inline size_t localerpl_rpl_mbstoc32s(unsigned *dst, const char *src, size_t n)
-{
-	return localerpl->rpl_mbstoc32s(dst, src, n);
-}
-
-#ifndef localerpl_do_not_redefine_c32stombs
-#ifdef c32stombs
-#undef c32stombs
-#endif
-#define c32stombs localerpl_rpl_c32stombs
-#endif
-static inline size_t localerpl_rpl_c32stombs(char *dst, const unsigned *src, size_t n)
-{
-	return localerpl->rpl_c32stombs(dst, src, n);
-}
-
-#ifndef localerpl_do_not_redefine_wcstoc32s
-#ifdef wcstoc32s
-#undef wcstoc32s
-#endif
-#define wcstoc32s localerpl_rpl_wcstoc32s
-#endif
-static inline size_t localerpl_rpl_wcstoc32s(unsigned *dst, const wchar_t *src, size_t n)
-{
-	return localerpl->rpl_wcstoc32s(dst, src, n);
-}
-
-#ifndef localerpl_do_not_redefine_c32stowcs
-#ifdef c32stowcs
-#undef c32stowcs
-#endif
-#define c32stowcs localerpl_rpl_c32stowcs
-#endif
-static inline size_t localerpl_rpl_c32stowcs(wchar_t *dst, const unsigned *src, size_t n)
-{
-	return localerpl->rpl_c32stowcs(dst, src, n);
-}
-
-#if !defined(_MSC_VER) || !defined(_PREFAST_)
-#ifndef localerpl_do_not_redefine_printf
-#ifdef printf
-#undef printf
-#endif
-#define printf localerpl_rpl_printf
-#endif
-#endif
-#define localerpl_rpl_printf localerpl->rpl_printf
-
-#if !defined(_MSC_VER) || !defined(_PREFAST_)
-#ifndef localerpl_do_not_redefine_fprintf
-#ifdef fprintf
-#undef fprintf
-#endif
-#define fprintf localerpl_rpl_fprintf
-#endif
-#endif
-#define localerpl_rpl_fprintf localerpl->rpl_fprintf
-
-#ifndef localerpl_do_not_redefine_vprintf
-#ifdef vprintf
-#undef vprintf
-#endif
-#define vprintf localerpl_rpl_vprintf
-#endif
-ATTRIBUTE_PRINTF(format, 1, 0)
-static inline int localerpl_rpl_vprintf(const char *format, va_list ap)
-{
-	return localerpl->rpl_vprintf(format, ap);
-}
-
-#ifndef localerpl_do_not_redefine_vfprintf
-#ifdef vfprintf
-#undef vfprintf
-#endif
-#define vfprintf localerpl_rpl_vfprintf
-#endif
-ATTRIBUTE_PRINTF(format, 2, 0)
-static inline int localerpl_rpl_vfprintf(FILE *stream, const char *format, va_list ap)
-{
-	return localerpl->rpl_vfprintf(stream, format, ap);
-}
-
-#ifndef localerpl_do_not_redefine_strerror
-#ifdef strerror
-#undef strerror
-#endif
-#define strerror localerpl_rpl_strerror
-#endif
-static inline char *localerpl_rpl_strerror(int error_number)
-{
-	return localerpl->rpl_strerror(error_number);
-}
-
-#ifndef localerpl_do_not_redefine_strftime
-#ifdef strftime
-#undef strftime
-#endif
-#define strftime localerpl_rpl_strftime
-#endif
-ATTRIBUTE_PRINTF(fmt, 3, 0)
-static inline size_t localerpl_rpl_strftime(char *s, size_t mx, const char *fmt, const struct tm *t)
-{
-	return localerpl->rpl_strftime(s, mx, fmt, t);
-}
-
-#ifndef localerpl_do_not_redefine_mkstemp
-#ifdef mkstemp
-#undef mkstemp
-#endif
-#define mkstemp localerpl_rpl_mkstemp
-#endif
-static inline int localerpl_rpl_mkstemp(char *templ)
-{
-	return localerpl->rpl_mkstemp(templ);
-}
-
-#ifndef localerpl_do_not_redefine_environ
-#ifdef environ
-#undef environ
-#endif
-#define environ localerpl_rpl_environ()
-#endif
-static inline char **localerpl_rpl_environ(void)
-{
-	return localerpl->rpl_environ();
-}
-
-#ifndef localerpl_do_not_redefine_getenv
-#ifdef getenv
-#undef getenv
-#endif
-#define getenv localerpl_rpl_getenv
-#endif
-static inline char *localerpl_rpl_getenv(const char *name)
-{
-	return localerpl->rpl_getenv(name);
-}
-
-#ifndef localerpl_do_not_redefine_setenv
-#ifdef setenv
-#undef setenv
-#endif
-#define setenv localerpl_rpl_setenv
-#endif
-static inline int localerpl_rpl_setenv(const char *name, const char *value, int overwrite)
-{
-	return localerpl->rpl_setenv(name, value, overwrite);
-}
-
-#ifndef localerpl_do_not_redefine_unsetenv
-#ifdef unsetenv
-#undef unsetenv
-#endif
-#define unsetenv localerpl_rpl_unsetenv
-#endif
-static inline int localerpl_rpl_unsetenv(const char *name)
-{
-	return localerpl->rpl_unsetenv(name);
-}
-
-#ifndef localerpl_do_not_redefine_clearenv
-#ifdef clearenv
-#undef clearenv
-#endif
-#define clearenv localerpl_rpl_clearenv
-#endif
-static inline int localerpl_rpl_clearenv(void)
-{
-	return localerpl->rpl_clearenv();
-}
-
-#ifndef localerpl_do_not_redefine_spawnvp
-#ifdef spawnvp
-#undef spawnvp
-#endif
-#define spawnvp localerpl_rpl_spawnvp
-#endif
-static inline intptr_t localerpl_rpl_spawnvp(int mode, const char *cmdname, const char *const *argv)
-{
-	return localerpl->rpl_spawnvp(mode, cmdname, argv);
-}
-
-#ifndef localerpl_do_not_redefine_spawnl
-#ifdef spawnl
-#undef spawnl
-#endif
-#define spawnl localerpl_rpl_spawnl
-#endif
-#define localerpl_rpl_spawnl localerpl->rpl_spawnl
-
-#ifndef localerpl_do_not_redefine_popen
-#ifdef popen
-#undef popen
-#endif
-#define popen localerpl_rpl_popen
-#endif
-static inline FILE *localerpl_rpl_popen(const char *command, const char *mode)
-{
-	return localerpl->rpl_popen(command, mode);
-}
+/* end of banned functions */
 
 #endif /* LOCALE_RPL_IMPL */
 
