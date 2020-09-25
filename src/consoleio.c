@@ -834,7 +834,7 @@ static int write_console_internal(struct console_write_buf *const wb,
 						break;
 				}
 				else {
-					offset += sz ? sz : 1;
+					offset += sz ? (unsigned)sz : 1;
 					if (put_uc(&console_cp, flags & ~APPEND_NL, data, wbuf, &wbuf_filled, uc)) {
 						wb->rem_cp = 0; /* reset */
 						return -1;

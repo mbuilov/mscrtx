@@ -612,7 +612,6 @@ int localerpl_stat(const char *path, struct __stat64 *buf);
 #endif
 
 #ifdef SAL_DEFS_H_INCLUDED /* include "sal_defs.h" for the annotations */
-A_Check_return
 A_Nonnull_all_args
 A_At(path, A_In_z)
 A_Success(!return)

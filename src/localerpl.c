@@ -1781,7 +1781,7 @@ static int is_percent_escaped(const char format[], const char *const s)
 		if (b[-1] != '%')
 			break;
 	}
-	return 1 & (size_t)(s - b);
+	return (int)(1 & (size_t)(s - b));
 }
 
 static int is_percent_escaped_w(const wchar_t format[], const wchar_t *const s)
@@ -1792,7 +1792,7 @@ static int is_percent_escaped_w(const wchar_t format[], const wchar_t *const s)
 		if (b[-1] != L'%')
 			break;
 	}
-	return 1 & (size_t)(s - b);
+	return (int)(1 & (size_t)(s - b));
 }
 
 static int printf_format_contains(const char *f, const char x[], const unsigned xlen)
