@@ -152,6 +152,11 @@ static size_t parse_one_arg(const wchar_t **const line, wchar_t dst[], const siz
 					continue; /* backslashes are special only before a double-quote */
 				t = w - ((size_t)(w - bs) + 1)/2;
 				skipped += (size_t)(w - t);
+				if (1u & (size_t)(w - bs)) {
+					d = copy_to(d, e, b, t);
+					b = w++;
+					continue; /* double-quote is escaped */
+				}
 				goto dquote;
 			}
 			case L'\0':case L' ':case L'\t':case L'"':
@@ -175,6 +180,11 @@ dquote:
 									continue; /* backslashes are special only before a double-quote */
 								t = w - ((size_t)(w - bs) + 1)/2;
 								skipped += (size_t)(w - t);
+								if (1u & (size_t)(w - bs)) {
+									d = copy_to(d, e, b, t);
+									b = w++;
+									continue; /* double-quote is escaped */
+								}
 								break;
 							}
 							case L'\0':case L'"':
