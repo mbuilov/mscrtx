@@ -128,20 +128,16 @@ block_sent:
 		result = nmemb - n - !!rem;
 		if (size == 1) {
 			to_send = n;
-			if (to_send > space) {
+			if (to_send > space)
 				n = to_send - space;
-				to_send = space;
-			}
 			else if (to_send != space)
 				break;
 		}
 		else {
 			for (to_send = rem; n && to_send < space; n--)
 				to_send += size;
-			if (to_send > space) {
+			if (to_send > space)
 				rem = to_send - space;
-				to_send = space;
-			}
 			else if (to_send != space)
 				break;
 			else
