@@ -249,6 +249,8 @@ struct wide_arg *arg_parse_command_line(int *const argc/*out*/)
 	if (!cmdline || !*cmdline) {
 		modname = arg_get_module_name(pathbuf, sizeof(pathbuf)/sizeof(pathbuf[0]));
 		if (!modname || !*modname) {
+			if (modname && modname != pathbuf)
+				free(modname);
 			errno = EINVAL;
 			return NULL;
 		}
