@@ -1340,25 +1340,23 @@ intptr_t localerpl_spawnvp(int mode, const char *cmdname, const char *const *arg
 {
 	if (localerpl_is_utf8()) {
 		wchar_t cmd_buf[SPAWN_CMD_BUF_SIZE];
-		wchar_t *argptr_buf[SPAWN_ARGPTR_BUF_SIZE], **wargv = argptr_buf, **pwa;
+		wchar_t *argptr_buf[SPAWN_ARGPTR_BUF_SIZE], **wargv = argptr_buf;
 		wchar_t *const wcmd = CVT_UTF8_TO_16_Z(cmdname, cmd_buf);
-		size_t n;
 		const char *const *a;
 		intptr_t ret = -1;
+		size_t n;
 
 		if (!wcmd)
 			return -1;
 
 		/* Count arguments.  */
-		for (a = argv; *a;)
-			a++;
+		for (a = argv; *a; a++);
 		n = (size_t)(a - argv);
 
 		if (n >= sizeof(argptr_buf)/sizeof(argptr_buf[0]))
 			wargv = (wchar_t**)malloc((n + 1)*sizeof(*wargv));
 
 		if (wargv) {
-
 			/* Convert each argument.  */
 			for (a = argv; *a; a++) {
 				wchar_t *const wa = cvt_utf8_to_16_z(*a, NULL, 0);
@@ -1366,13 +1364,14 @@ intptr_t localerpl_spawnvp(int mode, const char *cmdname, const char *const *arg
 					break;
 				wargv[a - argv] = wa;
 			}
-			wargv[a - argv] = NULL;
+			n = (size_t)(a - argv);
+			wargv[n] = NULL;
 
 			if (!*a)
 				ret = _wspawnvp(mode, wcmd, (const wchar_t *const *)wargv);
 
-			for (pwa = wargv; *pwa; pwa++)
-				free(*pwa);
+			while (n)
+				free(wargv[--n]);
 			if (wargv != argptr_buf)
 				free(wargv);
 		}
@@ -1951,8 +1950,11 @@ static int rpl_vfwprintfmb(FILE *stream, const wchar_t *format, va_list ap)
 
 	for (;;) {
 		n = vsnwprintf(buf, buf_size, format, ap);
-		if (!n)
+		if (!n) {
+			if (buf != stack_buf)
+				free(buf);
 			return 0;
+		}
 		if (n > 0)
 			break;
 		/* make a bigger buffer and try again */
