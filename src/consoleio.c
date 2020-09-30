@@ -131,10 +131,16 @@ unsigned get_locale_code_page(void)
 	return parse_locale_cp(ctype);
 }
 
-/* note: this size is effectively limits maximum length of strings
+/* Note: this size is effectively limits the maximum length of strings
    which can be entered interactively in the console window */
 #ifndef CONSOLEIO_READ_BUF_SIZE
-#define CONSOLEIO_READ_BUF_SIZE 65536
+# if defined _WIN32_WINNT && _WIN32_WINNT >= 0x0A00
+   /* Windows10 allows to read at once about 73727 characters */
+#  define CONSOLEIO_READ_BUF_SIZE 65536
+# else
+   /* WindowsXP allows about 26607 characters, Windows7 - about 31365 */
+#  define CONSOLEIO_READ_BUF_SIZE 32768
+# endif
 #endif
 
 /* read whole buffer at once, then copy from that buffer by small amounts */
@@ -174,16 +180,26 @@ A_At(buf, A_Post_readable_byte_size(return))
 A_Success(return >= 0)
 #endif
 static int read_fn(const int do_read, const intptr_t data,
-	void *const buf, const unsigned count/*[1..INT_MAX]*/)
+	void *const buf, unsigned count/*[1..INT_MAX]*/)
 {
 	int r = -1;
 
-	if (do_read)
-		r = _read((int)data, buf, count);
+	/* Note: too big count results in "Not enough space" error
+	   - decrement count and retry.  */
+	if (do_read) {
+		do {
+			if ((r = _read((int)data, buf, count)) != -1)
+				break;
+		} while (ERROR_NOT_ENOUGH_MEMORY == GetLastError() && --count);
+	}
 	else {
-		const size_t sz = fread(buf, 1, count, (FILE*)data);
-		if (sz || feof((FILE*)data))
-			r = (int)sz;
+		do {
+			const size_t sz = fread(buf, 1, count, (FILE*)data);
+			if (sz || feof((FILE*)data)) {
+				r = (int)sz;
+				break;
+			}
+		} while (ERROR_NOT_ENOUGH_MEMORY == GetLastError() && --count);
 	}
 
 	/* File descriptor is in binary mode, remove CRs.  */
